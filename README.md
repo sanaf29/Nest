@@ -138,20 +138,6 @@ The application is developed using a modular architecture and follows an Agile, 
 
 ---
 
-## System Architecture
-
-The application follows a layered architecture:
-
-backend/
-├── controller/   # Handles HTTP requests
-├── service/      # Business logic
-├── model/        # Entity classes
-├── repository/   # Data access layer
-├── dto/          # Data transfer objects
-└── config/       # Configuration
-
----
-
 ## Core Entities
 
 ### User
