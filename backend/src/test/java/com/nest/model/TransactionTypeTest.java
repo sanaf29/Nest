@@ -21,4 +21,12 @@ class TransactionTypeTest {
         assertThat(TransactionType.INCOME.isTransfer()).isFalse();
         assertThat(TransactionType.EXPENSE.isTransfer()).isFalse();
     }
+
+    @Test
+    void incomeAndExpenseRequireMatchingCategoryTypeWhileTransfersHaveNone() {
+        assertThat(TransactionType.INCOME.requiredCategoryType()).contains(CategoryType.INCOME);
+        assertThat(TransactionType.EXPENSE.requiredCategoryType()).contains(CategoryType.EXPENSE);
+        assertThat(TransactionType.TRANSFER_IN.requiredCategoryType()).isEmpty();
+        assertThat(TransactionType.TRANSFER_OUT.requiredCategoryType()).isEmpty();
+    }
 }

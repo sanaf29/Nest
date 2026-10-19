@@ -1462,6 +1462,605 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Categories",
+      "description": "Default categories are shared and read-only; user categories are private. DELETE archives. Cross-user requests use the second user created in the Accounts folder.",
+      "item": [
+        {
+          "name": "List categories (defaults + mine)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const list = pm.response.json();",
+                  "pm.test('Includes default categories', () => {",
+                  "  const groceries = list.find(c => c.name === 'Groceries');",
+                  "  pm.expect(groceries.isDefault).to.be.true;",
+                  "  pm.expect(groceries.categoryType).to.eql('EXPENSE');",
+                  "  pm.environment.set('defaultCategoryId', groceries.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List categories \u2014 income only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories?type=INCOME",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories?type=INCOME"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Only INCOME categories', () => pm.response.json().forEach(c => pm.expect(c.categoryType).to.eql('INCOME')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create category (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pets {{$timestamp}}\",\n  \"categoryType\": \"EXPENSE\",\n  \"color\": \"#f97316\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('User category with normalised colour', () => {",
+                  "  pm.expect(b.isDefault).to.be.false;",
+                  "  pm.expect(b.archived).to.be.false;",
+                  "  pm.expect(b.color).to.eql('#F97316');",
+                  "});",
+                  "pm.environment.set('categoryId', b.id);",
+                  "pm.environment.set('categoryName', b.name);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create category \u2014 duplicates a default (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"groceries\",\n  \"categoryType\": \"EXPENSE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(409);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create category \u2014 invalid input (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"categoryType\": \"EXPENSE\",\n  \"color\": \"red\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(400);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});",
+                  "pm.test('Reports name and color', () => pm.expect(pm.response.json().errors.map(e => e.field)).to.include.members(['name', 'color']));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update my category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{categoryName}} & Vet\",\n  \"color\": \"#EA580C\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Renamed; type unchanged', () => {",
+                  "  pm.expect(pm.response.json().name).to.include('& Vet');",
+                  "  pm.expect(pm.response.json().categoryType).to.eql('EXPENSE');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update default category (403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{defaultCategoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{defaultCategoryId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Food\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 403', () => pm.response.to.have.status(403));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(403);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete default category (403)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{defaultCategoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{defaultCategoryId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 403', () => pm.response.to.have.status(403));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(403);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 read my category (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherAuthToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(404);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 update my category (404)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Stolen\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherAuthToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(404);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 delete my category (404)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherAuthToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(404);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Archive my category (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List categories \u2014 archived hidden",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Archived category not listed', () => pm.expect(pm.response.json().map(c => c.id)).to.not.include(pm.environment.get('categoryId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List categories \u2014 includeArchived=true",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories?includeArchived=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories?includeArchived=true"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json().find(x => x.id === pm.environment.get('categoryId'));",
+                  "pm.test('Archived category kept', () => pm.expect(c.archived).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

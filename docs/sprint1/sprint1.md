@@ -12,16 +12,16 @@ Sprint 1 is backend-only. The React UI starts in Sprint 2.
 
 | PB ID | User Story | Priority | Status |
 |-------|------------|----------|--------|
-| 1.1 | Register with email and password | High | Done (in review) |
-| 1.2 | Log in and stay authenticated | High | Done (in review) |
-| 1.3 | View and edit profile / preferred currency | Medium | Done (in review) |
-| 2.1 | Create checking, savings, cash, credit card accounts | High | Done (in review) |
+| 1.1 | Register with email and password | High | Done |
+| 1.2 | Log in and stay authenticated | High | Done |
+| 1.3 | View and edit profile / preferred currency | Medium | Done |
+| 2.1 | Create checking, savings, cash, credit card accounts | High | Done |
 | 2.2 | See each account's current balance | High | In Progress (balance shows opening balance until transactions land in increment 4) |
-| 2.3 | Rename account / correct opening balance | Medium | Done (in review) |
-| 2.4 | Close an account without losing history | Medium | Done (in review) |
-| 3.1 | Default income and expense categories | High | Not Started |
-| 3.2 | Create own categories with colour | Medium | Not Started |
-| 3.3 | Archive categories safely | Medium | Not Started |
+| 2.3 | Rename account / correct opening balance | Medium | Done |
+| 2.4 | Close an account without losing history | Medium | Done |
+| 3.1 | Default income and expense categories | High | Done (in review) |
+| 3.2 | Create own categories with colour | Medium | Done (in review) |
+| 3.3 | Archive categories safely | Medium | Done (in review) |
 | 4.1 | Record income and expenses | High | Not Started |
 | 4.2 | Search and filter transactions with pagination | High | Not Started |
 | 4.3 | Edit or delete a transaction | High | Not Started |
@@ -37,10 +37,10 @@ The sprint is built in independently reviewable increments. Each increment has i
 
 | # | Increment | Branch | Contents | Status |
 |---|-----------|--------|----------|--------|
-| 0 | Planning | `docs/sprint0-planning` | Sprint 0 documents, this plan | In Review |
-| 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | In Review |
-| 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | In Review |
-| 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | Not Started |
+| 0 | Planning | `docs/sprint0-planning` | Sprint 0 documents, this plan | Done (PR #1) |
+| 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | Done (PR #2) |
+| 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | Done (PR #3) |
+| 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | In Review |
 | 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Not Started |
 | 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | Not Started |
 | 6 | Sprint close | `docs/sprint1-review` | As-built UML, sequence diagrams, CRC, `testing.md`, `SR1.md`, README | Not Started |
@@ -108,6 +108,7 @@ Updated as each increment is merged.
 | 0 | Sprint 0 planning documents | `docs/sprint0/` |
 | 1 | Backend foundation + authentication (PB 1.1–1.3) | See "Increment 1 test evidence" below |
 | 2 | Account management (PB 2.1, 2.3, 2.4; 2.2 partially) | See "Increment 2 test evidence" below |
+| 3 | Categories (PB 3.1–3.3) | See "Increment 3 test evidence" below |
 
 ### Increment 2: Account management
 - [x] `Money` value object (scale rules, same-currency arithmetic), `AccountType`, `TransactionType`
@@ -121,6 +122,17 @@ Updated as each increment is merged.
 - [x] Postman: Accounts folder (including cross-user requests)
 
 **Known interim limitation:** until increment 4 adds transactions, `currentBalance` equals the opening balance. The balance formula (`FinancialAccount.calculateBalance`) is implemented and unit-tested. Increment 4 only supplies the per-type totals from the database.
+
+### Increment 3: Categories
+- [x] `CategoryType`; `TransactionType.requiredCategoryType()` (prepares the increment 4 compatibility check)
+- [x] `Category` entity: defaults identified by `user == null` (derived, not stored), defaults read-only (403), archive instead of delete, type fixed at creation, `requireUsableFor(TransactionType)`
+- [x] Flyway `V3__create_categories.sql`: CHECK constraints, filtered unique indexes, 21 seeded defaults (6 income, 15 expense)
+- [x] `CategoryRepository` with visibility-scoped JPQL queries (defaults + own only)
+- [x] `CategoryService` + implementation; names unique per type across own and default categories, ignoring case
+- [x] `CategoryController`: `GET (filter by type, includeArchived) / GET {id} / POST / PUT / DELETE /api/categories`
+- [x] Unit tests: `CategoryTest`, `CategoryServiceImplTest`, `TransactionTypeTest` additions
+- [x] Integration test `CategoryIT`: seed data, filters, lifecycle, 403 on defaults, cross-user 404s, uniqueness
+- [x] Postman: Categories folder
 
 ### Increment 1 test evidence
 
@@ -144,3 +156,14 @@ Run on 2026-10-19 with the same environment as increment 1.
 | Integration tests | `./mvnw verify` | 26 run, 0 failures (`AuthIT` 8, `UserProfileIT` 8, `AccountIT` 10); V1 and V2 applied to an empty database |
 | Upgrade path | `./mvnw spring-boot:run` on the existing dev database | V2 applied on top of V1 |
 | Postman | `npx newman run postman/...` | 30 requests, 69 assertions, 0 failures |
+
+### Increment 3 test evidence
+
+Run on 2026-10-19 with the same environment.
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Unit tests | `./mvnw test` | 118 run, 0 failures |
+| Integration tests | `./mvnw verify` | 34 run, 0 failures (`CategoryIT` 8 new); V1–V3 applied to an empty database |
+| Upgrade path | `./mvnw spring-boot:run` on the existing dev database | V3 applied on top of V2 |
+| Postman | `npx newman run postman/...` | 44 requests, 97 assertions, 0 failures |
