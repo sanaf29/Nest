@@ -16,9 +16,9 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 | 5.2 | Savings as a percentage or fixed amount | High | Done |
 | 5.3 | Category spending limits | High | Done |
 | 5.4 | Actual vs. limits and remaining budget | High | Done |
-| 6.1 | Create a savings goal | High | Not Started |
-| 6.2 | Record contributions and see progress | High | Not Started |
-| 6.3 | Achieved goals marked automatically | Medium | Not Started |
+| 6.1 | Create a savings goal | High | Done |
+| 6.2 | Record contributions and see progress | High | Done |
+| 6.3 | Achieved goals marked automatically | Medium | Done |
 | 7.1 | Dashboard: balances, income, expenses, net cash flow | High | Not Started |
 | 7.2 | Charts: spending by category, monthly trends | High | Not Started |
 | 7.3 | Monthly transaction calendar | Medium | Not Started |
@@ -31,7 +31,7 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 | # | Increment | Branch | Contents | Status |
 |---|-----------|--------|----------|--------|
 | 1 | Budgets | `feature/budgets` | `MonthlyBudget`, `BudgetAllocation`, `SavingsAllocationStrategy` (percentage / fixed), budget summary, V6, `/api/budgets` | Done |
-| 2 | Savings goals | `feature/savings-goals` | `SavingsGoal`, `GoalContribution`, idempotent contributions, V7, `/api/savings-goals` | Not Started |
+| 2 | Savings goals | `feature/savings-goals` | `SavingsGoal`, `GoalContribution`, idempotent contributions, V7, `/api/savings-goals` | Done |
 | 3 | Dashboard APIs | `feature/dashboard` | Balances by currency, cash flow, spending by category, monthly trends | Not Started |
 | 4 | Frontend foundation | `feature/frontend-foundation` | Vite + React + TS + Tailwind, API client, auth context, protected routes, layout, login/register | Not Started |
 | 5 | Frontend features | `feature/frontend-*` | Dashboard, accounts, transactions + transfers + categories, budget planner, goals, calendar | Not Started |
@@ -72,3 +72,15 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 |-------|--------|
 | `./mvnw verify` | 198 unit, 70 integration, 0 failures |
 | Postman | Budgets folder added; run together with increments 2–3 (see below) |
+
+### Increment 2: Savings goals
+- `SavingsGoal` aggregate with `GoalContribution` children; saved amount derived from contributions; status follows the numbers (`ACHIEVED` ↔ `ACTIVE`) with `achievedAt`
+- Idempotent contributions: a replayed `idempotencyKey` returns the goal unchanged (200); `UX_goal_contributions_idempotency` backs this up under races
+- `Clock` injected for "today" (deadline and contribution-date rules)
+- Flyway `V7__create_savings_goals.sql`; `/api/savings-goals` (CRUD, contributions add/remove)
+- Tests: `SavingsGoalTest`, `SavingsGoalServiceImplTest`, `SavingsGoalIT`
+
+| Check | Result |
+|-------|--------|
+| `./mvnw verify` | 214 unit, 76 integration, 0 failures |
+| Postman | Savings Goals folder added; run with increment 3 |

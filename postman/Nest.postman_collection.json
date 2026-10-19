@@ -4271,6 +4271,478 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Savings Goals",
+      "description": "Goals track money set aside (contributions); they do not move money between accounts. Contributions with the same idempotencyKey are counted once.",
+      "item": [
+        {
+          "name": "Create goal (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Emergency fund {{$timestamp}}\",\n  \"targetAmount\": 1000.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('Active with nothing saved; preferred currency', () => {",
+                  "  pm.expect(b.status).to.eql('ACTIVE');",
+                  "  pm.expect(b.savedAmount).to.eql(0);",
+                  "  pm.expect(b.currency).to.eql('EUR');",
+                  "});",
+                  "pm.environment.set('goalId', b.id);",
+                  "pm.environment.set('goalName', b.name);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create goal \u2014 duplicate name (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{goalName}}\",\n  \"targetAmount\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(409);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create goal \u2014 invalid (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"targetAmount\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(400);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contribute (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals/{{goalId}}/contributions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals",
+                "{{goalId}}",
+                "contributions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 600.0,\n  \"note\": \"First deposit\",\n  \"idempotencyKey\": \"{{contributionKey}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('contributionKey', 'pm-' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Progress 60%', () => pm.expect(pm.response.json().progressPercent).to.eql(60));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contribute \u2014 replay same key (200, not counted)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals/{{goalId}}/contributions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals",
+                "{{goalId}}",
+                "contributions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 600.0,\n  \"note\": \"First deposit\",\n  \"idempotencyKey\": \"{{contributionKey}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Still 600 saved', () => pm.expect(pm.response.json().savedAmount).to.eql(600));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contribute \u2014 reach target (ACHIEVED)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals/{{goalId}}/contributions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals",
+                "{{goalId}}",
+                "contributions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 400.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('Goal achieved', () => {",
+                  "  pm.expect(b.status).to.eql('ACHIEVED');",
+                  "  pm.expect(b.progressPercent).to.eql(100);",
+                  "  pm.expect(b.achievedAt).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update goal \u2014 raise target (back to ACTIVE)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals/{{goalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals",
+                "{{goalId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{goalName}}\",\n  \"targetAmount\": 2000.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Re-opened at 50%', () => {",
+                  "  pm.expect(pm.response.json().status).to.eql('ACTIVE');",
+                  "  pm.expect(pm.response.json().progressPercent).to.eql(50);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List goals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Contains the goal', () => pm.expect(pm.response.json().map(g => g.id)).to.include(pm.environment.get('goalId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 contribute to my goal (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals/{{goalId}}/contributions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals",
+                "{{goalId}}",
+                "contributions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherAuthToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(404);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete goal (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/savings-goals/{{goalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "savings-goals",
+                "{{goalId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
