@@ -15,10 +15,10 @@ Sprint 1 is backend-only. The React UI starts in Sprint 2.
 | 1.1 | Register with email and password | High | Done (in review) |
 | 1.2 | Log in and stay authenticated | High | Done (in review) |
 | 1.3 | View and edit profile / preferred currency | Medium | Done (in review) |
-| 2.1 | Create checking, savings, cash, credit card accounts | High | Not Started |
-| 2.2 | See each account's current balance | High | Not Started |
-| 2.3 | Rename account / correct opening balance | Medium | Not Started |
-| 2.4 | Close an account without losing history | Medium | Not Started |
+| 2.1 | Create checking, savings, cash, credit card accounts | High | Done (in review) |
+| 2.2 | See each account's current balance | High | In Progress (balance shows opening balance until transactions land in increment 4) |
+| 2.3 | Rename account / correct opening balance | Medium | Done (in review) |
+| 2.4 | Close an account without losing history | Medium | Done (in review) |
 | 3.1 | Default income and expense categories | High | Not Started |
 | 3.2 | Create own categories with colour | Medium | Not Started |
 | 3.3 | Archive categories safely | Medium | Not Started |
@@ -39,7 +39,7 @@ The sprint is built in independently reviewable increments. Each increment has i
 |---|-----------|--------|----------|--------|
 | 0 | Planning | `docs/sprint0-planning` | Sprint 0 documents, this plan | In Review |
 | 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | In Review |
-| 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | Not Started |
+| 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | In Review |
 | 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | Not Started |
 | 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Not Started |
 | 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | Not Started |
@@ -107,6 +107,20 @@ Updated as each increment is merged.
 |-----------|---------|----------|
 | 0 | Sprint 0 planning documents | `docs/sprint0/` |
 | 1 | Backend foundation + authentication (PB 1.1–1.3) | See "Increment 1 test evidence" below |
+| 2 | Account management (PB 2.1, 2.3, 2.4; 2.2 partially) | See "Increment 2 test evidence" below |
+
+### Increment 2: Account management
+- [x] `Money` value object (scale rules, same-currency arithmetic), `AccountType`, `TransactionType`
+- [x] `FinancialAccount` entity: fixed type/currency, opening-balance rule per type, closed accounts immutable, `calculateBalance`
+- [x] Flyway `V2__create_financial_accounts.sql` with CHECK constraints and a filtered unique index on open account names
+- [x] `FinancialAccountRepository` (owner-scoped finders only)
+- [x] `FinancialAccountService` + implementation; currency defaults to the user's preferred currency
+- [x] `FinancialAccountController`: `POST/GET/GET {id}/PUT/DELETE /api/accounts`
+- [x] Unit tests: `MoneyTest`, `TransactionTypeTest`, `FinancialAccountTest`, `FinancialAccountServiceImplTest`
+- [x] Integration test `AccountIT`: lifecycle, 400/409/422 cases, cross-user 404s, DB constraints
+- [x] Postman: Accounts folder (including cross-user requests)
+
+**Known interim limitation:** until increment 4 adds transactions, `currentBalance` equals the opening balance. The balance formula (`FinancialAccount.calculateBalance`) is implemented and unit-tested. Increment 4 only supplies the per-type totals from the database.
 
 ### Increment 1 test evidence
 
@@ -119,3 +133,14 @@ Run on 2026-10-19 with JDK 21.0.8, Docker Desktop 28.5.1, and SQL Server 2022 (a
 | Dev stack | `docker compose up -d` + `./mvnw spring-boot:run` | `nest` database created; V1 applied; app started on :8080 |
 | Swagger | `GET /swagger-ui.html` | 302 → `/swagger-ui/index.html` 200 |
 | Postman | `npx newman run postman/...` | 11 requests, 31 assertions, 0 failures |
+
+### Increment 2 test evidence
+
+Run on 2026-10-19 with the same environment as increment 1.
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Unit tests | `./mvnw test` | 94 run, 0 failures |
+| Integration tests | `./mvnw verify` | 26 run, 0 failures (`AuthIT` 8, `UserProfileIT` 8, `AccountIT` 10); V1 and V2 applied to an empty database |
+| Upgrade path | `./mvnw spring-boot:run` on the existing dev database | V2 applied on top of V1 |
+| Postman | `npx newman run postman/...` | 30 requests, 69 assertions, 0 failures |
