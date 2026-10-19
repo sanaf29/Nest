@@ -24,8 +24,8 @@ Sprint 1 is backend-only. The React UI starts in Sprint 2.
 | 3.3 | Archive categories safely | Medium | Done |
 | 4.1 | Record income and expenses | High | Done |
 | 4.2 | Search and filter transactions with pagination | High | Done |
-| 4.3 | Edit or delete a transaction | High | Done (transfer-leg protection arrives with transfers in increment 5) |
-| 4.4 | Transfer between own accounts | High | Not Started |
+| 4.3 | Edit or delete a transaction | High | Done |
+| 4.4 | Transfer between own accounts | High | Done (in review) |
 
 Acceptance criteria for each item are in [PB.md](../sprint0/PB.md).
 
@@ -42,7 +42,7 @@ The sprint is built in independently reviewable increments, each on its own feat
 | 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | Done (PR #3) |
 | 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | Done (PR #4) |
 | 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Done (pushed to `main`) |
-| 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | Not Started |
+| 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | In Review |
 | 6 | Sprint close | `docs/sprint1-review` | As-built UML, sequence diagrams, CRC, `testing.md`, `SR1.md`, README | Not Started |
 
 ## Task Breakdown
@@ -110,6 +110,7 @@ Updated as each increment is merged.
 | 2 | Account management (PB 2.1, 2.3, 2.4; 2.2 partially) | See "Increment 2 test evidence" below |
 | 3 | Categories (PB 3.1–3.3) | See "Increment 3 test evidence" below |
 | 4 | Transactions + live balances (PB 2.2, 4.1–4.3) | See "Increment 4 test evidence" below |
+| 5 | Transfers (PB 4.4) | See "Increment 5 test evidence" below |
 
 ### Increment 2: Account management
 - [x] `Money` value object (scale rules, same-currency arithmetic), `AccountType`, `TransactionType`
@@ -146,6 +147,17 @@ Updated as each increment is merged.
 - [x] Unit tests: `TransactionTest`, `TransactionServiceImplTest`, balance aggregation in `FinancialAccountServiceImplTest`
 - [x] Integration test `TransactionIT`: balances, 422 rules, closed-account freeze, cross-user isolation, every filter, paging, sorting, wildcard escaping
 - [x] Postman: Transactions folder
+
+### Increment 5: Transfers
+- [x] `Transfer` aggregate: `Transfer.between(...)` factory builds a balanced `TRANSFER_OUT`/`TRANSFER_IN` pair; distinct accounts, same owner, same currency, both open, positive amount within currency decimals
+- [x] `Transaction`: optional `transfer`; transfer entries are created only by `Transfer` (package-private factory) and cannot be revised or deleted individually (409)
+- [x] Flyway `V5__create_transfers.sql`: `transfers` table, nullable `category_id`, `transfer_id`, `CK_transactions_shape`, one entry per direction per transfer (filtered unique index)
+- [x] `TransferRepository.findOwned` (ownership through the entries' accounts)
+- [x] `TransferService` + implementation: one `@Transactional` insert via cascade (atomic); delete removes both entries; refused if either account is closed
+- [x] `TransferController`: `POST /api/transfers`, `GET /api/transfers/{id}`, `DELETE /api/transfers/{id}`; `transferId` added to transaction responses
+- [x] Unit tests: `TransferTest`, `TransferServiceImplTest`
+- [x] Integration test `TransferIT`: balances, no income/spending created, entry protection (409), no partial writes on invalid input, credit card payment, cross-user isolation, database shape constraints
+- [x] Postman: Transfers folder
 
 ### Increment 1 test evidence
 
@@ -193,3 +205,16 @@ Run on 2026-10-19 with the same environment.
 | Postman | `npx newman run postman/...` | 65 requests, 137 assertions, 0 failures |
 
 Issue found while testing: the dev SQL Server container was killed (exit 137) while the Testcontainers SQL Server was running. Two emulated SQL Server instances likely exceeded Docker's 7.6 GB memory limit. It restarted cleanly with its data intact. The README now advises stopping the dev database before `./mvnw verify` on memory-constrained machines.
+
+### Increment 5 test evidence
+
+Run on 2026-10-19 with the same environment.
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Unit tests | `./mvnw test` | 162 run, 0 failures |
+| Integration tests | `./mvnw verify` (dev database stopped first) | 62 run, 0 failures (`TransferIT` 9 new); V1–V5 applied to an empty database |
+| Upgrade path | `./mvnw spring-boot:run` on the existing dev database | V5 applied on top of V4 |
+| Postman | `npx newman run postman/... --env-var baseUrl=http://localhost:8081` | 84 requests, 172 assertions, 0 failures |
+
+Port 8080 was taken by another local application during this run, so the backend was started with `--server.port=8081` and Newman's `baseUrl` was overridden to match.

@@ -1,6 +1,7 @@
 package com.nest.model;
 
 import com.nest.exception.BusinessRuleException;
+import com.nest.exception.ConflictException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,6 +27,8 @@ import java.util.Objects;
  *   <li>The amount is strictly positive and fits the account currency's decimal places. The direction comes from the type.</li>
  *   <li>The account is open (closed accounts keep their history frozen).</li>
  *   <li>The category is visible to the account's owner, not archived, and matches the type (EXPENSE ↔ EXPENSE).</li>
+ *   <li>Transfer entries ({@code TRANSFER_IN}/{@code TRANSFER_OUT}) have no category, belong to a
+ *       {@link Transfer}, and can only be changed through it.</li>
  * </ul>
  * The currency is not stored: it is always the account's currency.
  */
@@ -46,6 +49,11 @@ public class Transaction extends AuditableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    /** Set only on the two entries of a transfer. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transfer_id", updatable = false)
+    private Transfer transfer;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false, length = 20)
@@ -68,10 +76,34 @@ public class Transaction extends AuditableEntity {
     protected Transaction() {
     }
 
-    /** Records an INCOME or EXPENSE entry. Transfer legs are created by the transfer itself (increment 5). */
+    /** Records an INCOME or EXPENSE entry. Transfer entries are created only by {@link Transfer#between}. */
     public Transaction(FinancialAccount account, Category category, TransactionType type,
                        BigDecimal amount, String description, LocalDate transactionDate) {
         apply(account, category, type, amount, description, transactionDate);
+    }
+
+    /**
+     * One side of a transfer. Package-private: only {@link Transfer} may create entries that
+     * must exist in balanced pairs.
+     */
+    static Transaction transferLeg(Transfer transfer, FinancialAccount account, TransactionType type,
+                                   Money amount, String description, LocalDate date) {
+        if (!type.isTransfer()) {
+            throw new IllegalArgumentException("Not a transfer type: " + type);
+        }
+        if (!account.getCurrency().equals(amount.currency())) {
+            throw new BusinessRuleException("Account '%s' is in %s, not %s."
+                    .formatted(account.getName(), account.getCurrency(), amount.currency()));
+        }
+        account.requireOpenForActivity();
+        Transaction leg = new Transaction();
+        leg.transfer = Objects.requireNonNull(transfer, "transfer");
+        leg.account = account;
+        leg.type = type;
+        leg.amount = amount.amount();
+        leg.description = normalizeDescription(description);
+        leg.transactionDate = Objects.requireNonNull(date, "date");
+        return leg;
     }
 
     /**
@@ -81,6 +113,7 @@ public class Transaction extends AuditableEntity {
      */
     public void revise(FinancialAccount newAccount, Category newCategory, TransactionType newType,
                        BigDecimal newAmount, String newDescription, LocalDate newDate) {
+        requireNotTransferLeg();
         account.requireOpenForActivity();
         if (!Objects.equals(account.ownerId(), newAccount.ownerId())) {
             throw new BusinessRuleException("A transaction cannot be moved to another user's account.");
@@ -88,9 +121,21 @@ public class Transaction extends AuditableEntity {
         apply(newAccount, newCategory, newType, newAmount, newDescription, newDate);
     }
 
-    /** Checks that this entry may be deleted. Only entries on open accounts can be. */
+    /** Checks that this entry may be deleted on its own: not part of a transfer, and on an open account. */
     public void requireRemovable() {
+        requireNotTransferLeg();
         account.requireOpenForActivity();
+    }
+
+    /**
+     * Changing one side of a transfer would unbalance it, so its entries can only be changed
+     * through the transfer. This is a conflict with the resource's state (409), not invalid input.
+     */
+    private void requireNotTransferLeg() {
+        if (transfer != null) {
+            throw new ConflictException("This entry is part of transfer %d; change it through /api/transfers/%d."
+                    .formatted(transfer.getId(), transfer.getId()));
+        }
     }
 
     private void apply(FinancialAccount newAccount, Category newCategory, TransactionType newType,
@@ -151,8 +196,16 @@ public class Transaction extends AuditableEntity {
         return type.balanceSign() > 0 ? money().amount() : money().amount().negate();
     }
 
+    public boolean isTransferLeg() {
+        return transfer != null;
+    }
+
     public Long getId() {
         return id;
+    }
+
+    public Transfer getTransfer() {
+        return transfer;
     }
 
     public FinancialAccount getAccount() {

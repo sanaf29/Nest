@@ -21,6 +21,7 @@ public class TransactionMapper {
                 transaction.currency(),
                 transaction.getDescription(),
                 transaction.getTransactionDate(),
+                transaction.isTransferLeg() ? transaction.getTransfer().getId() : null,
                 transaction.getCreatedAt(),
                 transaction.getUpdatedAt());
     }

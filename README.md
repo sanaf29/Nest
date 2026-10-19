@@ -263,6 +263,8 @@ Import `postman/Nest.postman_collection.json` and `postman/Nest.local.postman_en
 npx newman run postman/Nest.postman_collection.json -e postman/Nest.local.postman_environment.json
 ```
 
+If port 8080 is taken by another application, start the backend with `./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081` and add `--env-var baseUrl=http://localhost:8081` to the Newman command, or change `baseUrl` in the Postman environment.
+
 ### Frontend
 
 The React frontend is planned for Sprint 2.
