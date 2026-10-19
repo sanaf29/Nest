@@ -9,12 +9,19 @@ import com.nest.mapper.AccountMapper;
 import com.nest.model.FinancialAccount;
 import com.nest.model.Money;
 import com.nest.model.User;
+import com.nest.model.TransactionType;
+import com.nest.repository.AccountTypeTotal;
 import com.nest.repository.FinancialAccountRepository;
+import com.nest.repository.TransactionRepository;
 import com.nest.repository.UserRepository;
 import com.nest.service.FinancialAccountService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,13 +30,16 @@ public class FinancialAccountServiceImpl implements FinancialAccountService {
 
     private final FinancialAccountRepository accountRepository;
     private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
     private final AccountMapper accountMapper;
 
     public FinancialAccountServiceImpl(FinancialAccountRepository accountRepository,
                                        UserRepository userRepository,
+                                       TransactionRepository transactionRepository,
                                        AccountMapper accountMapper) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
+        this.transactionRepository = transactionRepository;
         this.accountMapper = accountMapper;
     }
 
@@ -52,7 +62,11 @@ public class FinancialAccountServiceImpl implements FinancialAccountService {
         List<FinancialAccount> accounts = includeInactive
                 ? accountRepository.findByUserIdOrderByNameAsc(userId)
                 : accountRepository.findByUserIdAndActiveTrueOrderByNameAsc(userId);
-        return accounts.stream().map(this::toResponse).toList();
+        Map<Long, Map<TransactionType, BigDecimal>> totals = totalsFor(accounts.stream().map(FinancialAccount::getId).toList());
+        return accounts.stream()
+                .map(account -> accountMapper.toResponse(account,
+                        account.calculateBalance(totals.getOrDefault(account.getId(), Map.of()))))
+                .toList();
     }
 
     @Override
@@ -94,15 +108,22 @@ public class FinancialAccountServiceImpl implements FinancialAccountService {
     }
 
     private AccountResponse toResponse(FinancialAccount account) {
-        return accountMapper.toResponse(account, balanceOf(account));
+        Map<TransactionType, BigDecimal> totals = account.getId() == null
+                ? Map.of()
+                : totalsFor(List.of(account.getId())).getOrDefault(account.getId(), Map.of());
+        return accountMapper.toResponse(account, account.calculateBalance(totals));
     }
 
-    /**
-     * Until transactions exist (increment 4) the balance equals the opening balance. Increment 4
-     * replaces the empty map with per-type totals from one GROUP BY query on transactions. The
-     * calculation itself, {@link FinancialAccount#calculateBalance}, is already final and tested.
-     */
-    private Money balanceOf(FinancialAccount account) {
-        return account.calculateBalance(Map.of());
+    /** Per-type totals for the given accounts, loaded with one GROUP BY query however many accounts there are. */
+    private Map<Long, Map<TransactionType, BigDecimal>> totalsFor(Collection<Long> accountIds) {
+        if (accountIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Map<TransactionType, BigDecimal>> totals = new HashMap<>();
+        for (AccountTypeTotal row : transactionRepository.sumByAccountAndType(accountIds)) {
+            totals.computeIfAbsent(row.accountId(), id -> new EnumMap<>(TransactionType.class))
+                    .put(row.type(), row.total());
+        }
+        return totals;
     }
 }

@@ -253,6 +253,8 @@ cd backend
 ./mvnw verify    # unit + integration tests (Testcontainers starts a throwaway SQL Server)
 ```
 
+`verify` starts a second SQL Server in Docker. On Apple Silicon each emulated instance needs about 2 GB of memory, so on a machine with limited Docker memory, run `docker compose stop` first and `docker compose start` afterwards.
+
 ### 5. Exercise the API with Postman
 
 Import `postman/Nest.postman_collection.json` and `postman/Nest.local.postman_environment.json`, select the **Nest Local** environment, and run the collection. From the command line:

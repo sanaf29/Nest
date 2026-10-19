@@ -101,6 +101,23 @@ public class FinancialAccount extends AuditableEntity {
         return user.getId() != null && user.getId() == userId;
     }
 
+    /** Owner's id. Reading the id of a lazy proxy does not load the user. */
+    public Long ownerId() {
+        return user.getId();
+    }
+
+    /**
+     * Guards changes to the account's ledger: closed accounts keep their history exactly as it was.
+     *
+     * @throws BusinessRuleException if the account is closed
+     */
+    public void requireOpenForActivity() {
+        if (!active) {
+            throw new BusinessRuleException("Account '%s' is closed; its transactions cannot be added, changed, or removed."
+                    .formatted(name));
+        }
+    }
+
     /**
      * Balance = opening balance + Σ (sign(type) × total(type)).
      *

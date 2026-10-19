@@ -9,7 +9,10 @@ import com.nest.mapper.AccountMapper;
 import com.nest.model.AccountType;
 import com.nest.model.FinancialAccount;
 import com.nest.model.User;
+import com.nest.model.TransactionType;
+import com.nest.repository.AccountTypeTotal;
 import com.nest.repository.FinancialAccountRepository;
+import com.nest.repository.TransactionRepository;
 import com.nest.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -41,13 +44,15 @@ class FinancialAccountServiceImplTest {
     private FinancialAccountRepository accountRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private TransactionRepository transactionRepository;
 
     private FinancialAccountServiceImpl service;
     private User owner;
 
     @BeforeEach
     void setUp() {
-        service = new FinancialAccountServiceImpl(accountRepository, userRepository, new AccountMapper());
+        service = new FinancialAccountServiceImpl(accountRepository, userRepository, transactionRepository, new AccountMapper());
         owner = new User("Sanae", "Faghfouri", "sanae@example.com", "$2a$hash", "EUR");
         ReflectionTestUtils.setField(owner, "id", USER_ID);
     }
@@ -177,5 +182,24 @@ class FinancialAccountServiceImplTest {
         service.deactivate(USER_ID, ACCOUNT_ID);
 
         assertThat(account.isActive()).isFalse();
+    }
+
+    @Test
+    void listComputesEveryBalanceFromASingleAggregateQuery() {
+        FinancialAccount chequing = existingAccount();
+        FinancialAccount savings = new FinancialAccount(owner, "Savings", AccountType.SAVINGS, "EUR", new BigDecimal("1000"));
+        ReflectionTestUtils.setField(savings, "id", 11L);
+        when(accountRepository.findByUserIdAndActiveTrueOrderByNameAsc(USER_ID)).thenReturn(List.of(chequing, savings));
+        when(transactionRepository.sumByAccountAndType(List.of(ACCOUNT_ID, 11L))).thenReturn(List.of(
+                new AccountTypeTotal(ACCOUNT_ID, TransactionType.INCOME, new BigDecimal("50.0000")),
+                new AccountTypeTotal(ACCOUNT_ID, TransactionType.EXPENSE, new BigDecimal("20.2500")),
+                new AccountTypeTotal(11L, TransactionType.EXPENSE, new BigDecimal("100.0000"))));
+
+        List<AccountResponse> accounts = service.list(USER_ID, false);
+
+        assertThat(accounts).extracting(AccountResponse::currentBalance)
+                .usingElementComparator(BigDecimal::compareTo)
+                .containsExactly(new BigDecimal("129.75"), new BigDecimal("900.00"));
+        verify(transactionRepository).sumByAccountAndType(List.of(ACCOUNT_ID, 11L));
     }
 }

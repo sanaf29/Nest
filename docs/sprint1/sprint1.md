@@ -16,15 +16,15 @@ Sprint 1 is backend-only. The React UI starts in Sprint 2.
 | 1.2 | Log in and stay authenticated | High | Done |
 | 1.3 | View and edit profile / preferred currency | Medium | Done |
 | 2.1 | Create checking, savings, cash, credit card accounts | High | Done |
-| 2.2 | See each account's current balance | High | In Progress (balance shows opening balance until transactions land in increment 4) |
+| 2.2 | See each account's current balance | High | Done (in review) |
 | 2.3 | Rename account / correct opening balance | Medium | Done |
 | 2.4 | Close an account without losing history | Medium | Done |
-| 3.1 | Default income and expense categories | High | Done (in review) |
-| 3.2 | Create own categories with colour | Medium | Done (in review) |
-| 3.3 | Archive categories safely | Medium | Done (in review) |
-| 4.1 | Record income and expenses | High | Not Started |
-| 4.2 | Search and filter transactions with pagination | High | Not Started |
-| 4.3 | Edit or delete a transaction | High | Not Started |
+| 3.1 | Default income and expense categories | High | Done |
+| 3.2 | Create own categories with colour | Medium | Done |
+| 3.3 | Archive categories safely | Medium | Done |
+| 4.1 | Record income and expenses | High | Done (in review) |
+| 4.2 | Search and filter transactions with pagination | High | Done (in review) |
+| 4.3 | Edit or delete a transaction | High | Done (in review; transfer-leg protection arrives with transfers in increment 5) |
 | 4.4 | Transfer between own accounts | High | Not Started |
 
 Acceptance criteria for each item are in [PB.md](../sprint0/PB.md).
@@ -40,8 +40,8 @@ The sprint is built in independently reviewable increments. Each increment has i
 | 0 | Planning | `docs/sprint0-planning` | Sprint 0 documents, this plan | Done (PR #1) |
 | 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | Done (PR #2) |
 | 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | Done (PR #3) |
-| 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | In Review |
-| 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Not Started |
+| 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | Done (PR #4) |
+| 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | In Review |
 | 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | Not Started |
 | 6 | Sprint close | `docs/sprint1-review` | As-built UML, sequence diagrams, CRC, `testing.md`, `SR1.md`, README | Not Started |
 
@@ -109,6 +109,7 @@ Updated as each increment is merged.
 | 1 | Backend foundation + authentication (PB 1.1–1.3) | See "Increment 1 test evidence" below |
 | 2 | Account management (PB 2.1, 2.3, 2.4; 2.2 partially) | See "Increment 2 test evidence" below |
 | 3 | Categories (PB 3.1–3.3) | See "Increment 3 test evidence" below |
+| 4 | Transactions + live balances (PB 2.2, 4.1–4.3) | See "Increment 4 test evidence" below |
 
 ### Increment 2: Account management
 - [x] `Money` value object (scale rules, same-currency arithmetic), `AccountType`, `TransactionType`
@@ -121,7 +122,7 @@ Updated as each increment is merged.
 - [x] Integration test `AccountIT`: lifecycle, 400/409/422 cases, cross-user 404s, DB constraints
 - [x] Postman: Accounts folder (including cross-user requests)
 
-**Known interim limitation:** until increment 4 adds transactions, `currentBalance` equals the opening balance. The balance formula (`FinancialAccount.calculateBalance`) is implemented and unit-tested. Increment 4 only supplies the per-type totals from the database.
+**Interim limitation (resolved in increment 4):** until increment 4, `currentBalance` equalled the opening balance. Balances are now derived from transaction totals.
 
 ### Increment 3: Categories
 - [x] `CategoryType`; `TransactionType.requiredCategoryType()` (prepares the increment 4 compatibility check)
@@ -133,6 +134,18 @@ Updated as each increment is merged.
 - [x] Unit tests: `CategoryTest`, `CategoryServiceImplTest`, `TransactionTypeTest` additions
 - [x] Integration test `CategoryIT`: seed data, filters, lifecycle, 403 on defaults, cross-user 404s, uniqueness
 - [x] Postman: Categories folder
+
+### Increment 4: Transactions
+- [x] `Transaction` entity: positive amount within the account currency's decimals, open account, visible + unarchived + type-compatible category, `revise()` re-checks everything, entries on closed accounts are frozen
+- [x] Flyway `V4__create_transactions.sql` (INCOME/EXPENSE only; increment 5 extends it for transfer legs), with indexes for account history and category lookups
+- [x] `TransactionRepository`: owner-scoped lookup, `@EntityGraph` to avoid N+1, one `GROUP BY` query for balances of any number of accounts
+- [x] `TransactionSpecifications` (Specification pattern): account, category, type, date range, amount range, escaped text search
+- [x] `TransactionService` + implementation; client currency is only ever checked, never trusted
+- [x] `TransactionController`: `POST / GET (filters, paging, allow-listed sort) / GET {id} / PUT / DELETE /api/transactions`; `PageResponse` JSON shape
+- [x] `FinancialAccountService` now returns live balances
+- [x] Unit tests: `TransactionTest`, `TransactionServiceImplTest`, balance aggregation in `FinancialAccountServiceImplTest`
+- [x] Integration test `TransactionIT`: balances, 422 rules, closed-account freeze, cross-user isolation, every filter, paging, sorting, wildcard escaping
+- [x] Postman: Transactions folder
 
 ### Increment 1 test evidence
 
@@ -167,3 +180,16 @@ Run on 2026-10-19 with the same environment.
 | Integration tests | `./mvnw verify` | 34 run, 0 failures (`CategoryIT` 8 new); V1–V3 applied to an empty database |
 | Upgrade path | `./mvnw spring-boot:run` on the existing dev database | V3 applied on top of V2 |
 | Postman | `npx newman run postman/...` | 44 requests, 97 assertions, 0 failures |
+
+### Increment 4 test evidence
+
+Run on 2026-10-19 with the same environment.
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Unit tests | `./mvnw test` | 144 run, 0 failures |
+| Integration tests | `./mvnw verify` | 53 run, 0 failures (`TransactionIT` 19 new); V1–V4 applied to an empty database |
+| Upgrade path | `./mvnw spring-boot:run` on the existing dev database | V4 applied on top of V3 |
+| Postman | `npx newman run postman/...` | 65 requests, 137 assertions, 0 failures |
+
+Issue found while testing: the dev SQL Server container was killed (exit 137) while the Testcontainers SQL Server was running. Two emulated SQL Server instances likely exceeded Docker's 7.6 GB memory limit. It restarted cleanly with its data intact. The README now advises stopping the dev database before `./mvnw verify` on memory-constrained machines.
