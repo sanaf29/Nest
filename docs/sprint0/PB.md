@@ -16,9 +16,9 @@ Requirement references (FR-x / NFR-x) point to [requirements.md](requirements.md
 
 | ID | User Story | Priority | Sprint | Status |
 |----|------------|----------|--------|--------|
-| 1.1 | As a user, I want to register with my email and a password, so that my financial data is private to me. | High | 1 | Not Started |
-| 1.2 | As a user, I want to log in and stay authenticated while I use the app, so that I don't re-enter my password for every action. | High | 1 | Not Started |
-| 1.3 | As a user, I want to view and edit my profile and preferred currency, so that new accounts default to the currency I use. | Medium | 1 | Not Started |
+| 1.1 | As a user, I want to register with my email and a password, so that my financial data is private to me. | High | 1 | Done |
+| 1.2 | As a user, I want to log in and stay authenticated while I use the app, so that I don't re-enter my password for every action. | High | 1 | Done |
+| 1.3 | As a user, I want to view and edit my profile and preferred currency, so that new accounts default to the currency I use. | Medium | 1 | Done |
 
 **Acceptance criteria**
 
@@ -32,10 +32,10 @@ Requirement references (FR-x / NFR-x) point to [requirements.md](requirements.md
 
 | ID | User Story | Priority | Sprint | Status |
 |----|------------|----------|--------|--------|
-| 2.1 | As a user, I want to create checking, savings, cash, and credit card accounts, so that I can track where my money is. | High | 1 | Not Started |
-| 2.2 | As a user, I want to see each account's current balance, so that I know how much I have (or owe). | High | 1 | Not Started |
-| 2.3 | As a user, I want to rename an account or correct its opening balance, so that my records stay accurate. | Medium | 1 | Not Started |
-| 2.4 | As a user, I want to close an account without losing its history, so that past reports remain correct. | Medium | 1 | Not Started |
+| 2.1 | As a user, I want to create checking, savings, cash, and credit card accounts, so that I can track where my money is. | High | 1 | Done |
+| 2.2 | As a user, I want to see each account's current balance, so that I know how much I have (or owe). | High | 1 | Done |
+| 2.3 | As a user, I want to rename an account or correct its opening balance, so that my records stay accurate. | Medium | 1 | Done |
+| 2.4 | As a user, I want to close an account without losing its history, so that past reports remain correct. | Medium | 1 | Done |
 
 **Acceptance criteria**
 
@@ -50,9 +50,9 @@ Requirement references (FR-x / NFR-x) point to [requirements.md](requirements.md
 
 | ID | User Story | Priority | Sprint | Status |
 |----|------------|----------|--------|--------|
-| 3.1 | As a user, I want a ready-made set of income and expense categories, so that I can start tracking immediately. | High | 1 | Not Started |
-| 3.2 | As a user, I want to create my own categories with a colour, so that I can organise spending my way. | Medium | 1 | Not Started |
-| 3.3 | As a user, I want to remove categories I no longer use without breaking old transactions, so that my list stays tidy. | Medium | 1 | Not Started |
+| 3.1 | As a user, I want a ready-made set of income and expense categories, so that I can start tracking immediately. | High | 1 | Done |
+| 3.2 | As a user, I want to create my own categories with a colour, so that I can organise spending my way. | Medium | 1 | Done |
+| 3.3 | As a user, I want to remove categories I no longer use without breaking old transactions, so that my list stays tidy. | Medium | 1 | Done |
 
 **Acceptance criteria**
 
@@ -66,10 +66,10 @@ Requirement references (FR-x / NFR-x) point to [requirements.md](requirements.md
 
 | ID | User Story | Priority | Sprint | Status |
 |----|------------|----------|--------|--------|
-| 4.1 | As a user, I want to record income and expenses with a category, date, and description, so that I know where my money comes from and goes. | High | 1 | Not Started |
-| 4.2 | As a user, I want to search and filter my transactions page by page, so that I can find specific activity quickly. | High | 1 | Not Started |
-| 4.3 | As a user, I want to edit or delete a transaction, so that I can fix mistakes. | High | 1 | Not Started |
-| 4.4 | As a user, I want to transfer money between my accounts, so that balances stay correct without counting the move as spending. | High | 1 | Not Started |
+| 4.1 | As a user, I want to record income and expenses with a category, date, and description, so that I know where my money comes from and goes. | High | 1 | Done |
+| 4.2 | As a user, I want to search and filter my transactions page by page, so that I can find specific activity quickly. | High | 1 | Done |
+| 4.3 | As a user, I want to edit or delete a transaction, so that I can fix mistakes. | High | 1 | Done |
+| 4.4 | As a user, I want to transfer money between my accounts, so that balances stay correct without counting the move as spending. | High | 1 | Done |
 
 **Acceptance criteria**
 

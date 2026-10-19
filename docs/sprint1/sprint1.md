@@ -25,7 +25,7 @@ Sprint 1 is backend-only. The React UI starts in Sprint 2.
 | 4.1 | Record income and expenses | High | Done |
 | 4.2 | Search and filter transactions with pagination | High | Done |
 | 4.3 | Edit or delete a transaction | High | Done |
-| 4.4 | Transfer between own accounts | High | Done (in review) |
+| 4.4 | Transfer between own accounts | High | Done |
 
 Acceptance criteria for each item are in [PB.md](../sprint0/PB.md).
 
@@ -41,9 +41,9 @@ The sprint is built in independently reviewable increments, each on its own feat
 | 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | Done (PR #2) |
 | 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | Done (PR #3) |
 | 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | Done (PR #4) |
-| 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Done (pushed to `main`) |
-| 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | In Review |
-| 6 | Sprint close | `docs/sprint1-review` | As-built UML, sequence diagrams, CRC, `testing.md`, `SR1.md`, README | Not Started |
+| 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Done |
+| 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | Done |
+| 6 | Sprint close | `docs/sprint1-review` | As-built UML, sequence diagrams, `testing.md`, `SR1.md`, README | Done |
 
 ## Task Breakdown
 
@@ -86,16 +86,16 @@ These are summarised here; [system_design.md](../sprint0/system_design.md) gives
 
 ## Sprint 1 Definition of Done
 
-- [ ] Backend builds successfully (`./mvnw verify`)
-- [ ] SQL Server connection works (Docker Compose)
-- [ ] Migrations execute successfully on an empty database
-- [ ] Authentication works
-- [ ] Accounts and transactions persist
-- [ ] REST APIs can be exercised in Postman
-- [ ] Ownership restrictions work (cross-user tests)
-- [ ] Unit and integration tests pass
-- [ ] Swagger UI is accessible at `/swagger-ui.html`
-- [ ] UML and sprint documentation are complete
+- [x] Backend builds successfully (`./mvnw verify`)
+- [x] SQL Server connection works (Docker Compose)
+- [x] Migrations execute successfully on an empty database
+- [x] Authentication works
+- [x] Accounts and transactions persist
+- [x] REST APIs can be exercised in Postman
+- [x] Ownership restrictions work (cross-user tests)
+- [x] Unit and integration tests pass
+- [x] Swagger UI is accessible at `/swagger-ui.html`
+- [x] UML and sprint documentation are complete
 
 ---
 
@@ -111,6 +111,7 @@ Updated as each increment is merged.
 | 3 | Categories (PB 3.1–3.3) | See "Increment 3 test evidence" below |
 | 4 | Transactions + live balances (PB 2.2, 4.1–4.3) | See "Increment 4 test evidence" below |
 | 5 | Transfers (PB 4.4) | See "Increment 5 test evidence" below |
+| 6 | Sprint close | [uml_class_diagram.md](uml_class_diagram.md), [sequence_diagrams.md](sequence_diagrams.md), [testing.md](testing.md), [SR1.md](SR1.md), README |
 
 ### Increment 2: Account management
 - [x] `Money` value object (scale rules, same-currency arithmetic), `AccountType`, `TransactionType`
