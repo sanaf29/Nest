@@ -4743,6 +4743,206 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Read-only aggregates. Totals are grouped by currency and exclude transfers.",
+      "item": [
+        {
+          "name": "Dashboard summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/summary?year=2026&month=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "summary?year=2026&month=10"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const s = pm.response.json();",
+                  "pm.test('Shape', () => pm.expect(s).to.include.all.keys('balances', 'cashFlow', 'budget', 'activeGoals', 'achievedGoalCount', 'preferredCurrency'));",
+                  "pm.test('Balances are per currency', () => {",
+                  "  const currencies = s.balances.map(b => b.currency);",
+                  "  pm.expect(new Set(currencies).size).to.eql(currencies.length);",
+                  "  pm.expect(currencies).to.include('CAD');",
+                  "});",
+                  "// This run's user: 3000 October income (Transactions folder); the October expense was deleted there,",
+                  "// and the 500 transfer in the Transfers folder must not count as spending.",
+                  "pm.test('October CAD cash flow: 3000 income, no expenses, transfer excluded', () => {",
+                  "  const cad = s.cashFlow.find(c => c.currency === 'CAD');",
+                  "  pm.expect(cad.income).to.eql(3000);",
+                  "  pm.expect(cad.expenses).to.eql(0);",
+                  "  pm.expect(cad.net).to.eql(3000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Spending by category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/spending-by-category?year=2026&month=10&currency=CAD",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "spending-by-category?year=2026&month=10&currency=CAD"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const s = pm.response.json();",
+                  "pm.test('Largest first; percentages sum to ~100', () => {",
+                  "  const amounts = s.categories.map(c => c.amount);",
+                  "  pm.expect(amounts).to.eql([...amounts].sort((a, b) => b - a));",
+                  "  if (s.categories.length) {",
+                  "    const sum = s.categories.reduce((t, c) => t + c.percentOfTotal, 0);",
+                  "    pm.expect(sum).to.be.within(99.9, 100.1);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Monthly trends (6 months)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/monthly-trends?months=6&year=2026&month=10&currency=CAD",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "monthly-trends?months=6&year=2026&month=10&currency=CAD"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const t = pm.response.json();",
+                  "pm.test('Six months, oldest first, ending October 2026', () => {",
+                  "  pm.expect(t.months).to.have.lengthOf(6);",
+                  "  pm.expect(t.months[0].month).to.eql(5);",
+                  "  pm.expect(t.months[5].month).to.eql(10);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Monthly trends \u2014 too many months (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/monthly-trends?months=60",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "monthly-trends?months=60"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(400);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dashboard \u2014 no token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "summary"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', () => pm.response.to.have.status(401));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(401);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

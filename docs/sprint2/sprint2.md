@@ -19,8 +19,8 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 | 6.1 | Create a savings goal | High | Done |
 | 6.2 | Record contributions and see progress | High | Done |
 | 6.3 | Achieved goals marked automatically | Medium | Done |
-| 7.1 | Dashboard: balances, income, expenses, net cash flow | High | Not Started |
-| 7.2 | Charts: spending by category, monthly trends | High | Not Started |
+| 7.1 | Dashboard: balances, income, expenses, net cash flow | High | Done (API; UI in increment 5) |
+| 7.2 | Charts: spending by category, monthly trends | High | In Progress (API done; charts in increment 5) |
 | 7.3 | Monthly transaction calendar | Medium | Not Started |
 | 8.1 | Register and log in through the website | High | Not Started |
 | 8.2 | Manage accounts, categories, transactions, transfers in the UI | High | Not Started |
@@ -32,7 +32,7 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 |---|-----------|--------|----------|--------|
 | 1 | Budgets | `feature/budgets` | `MonthlyBudget`, `BudgetAllocation`, `SavingsAllocationStrategy` (percentage / fixed), budget summary, V6, `/api/budgets` | Done |
 | 2 | Savings goals | `feature/savings-goals` | `SavingsGoal`, `GoalContribution`, idempotent contributions, V7, `/api/savings-goals` | Done |
-| 3 | Dashboard APIs | `feature/dashboard` | Balances by currency, cash flow, spending by category, monthly trends | Not Started |
+| 3 | Dashboard APIs | `feature/dashboard` | Balances by currency, cash flow, spending by category, monthly trends | Done |
 | 4 | Frontend foundation | `feature/frontend-foundation` | Vite + React + TS + Tailwind, API client, auth context, protected routes, layout, login/register | Not Started |
 | 5 | Frontend features | `feature/frontend-*` | Dashboard, accounts, transactions + transfers + categories, budget planner, goals, calendar | Not Started |
 | 6 | Sprint close | `docs/sprint2-review` | Updated class diagram, sequence diagrams, testing, SR2 | Not Started |
@@ -84,3 +84,21 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 |-------|--------|
 | `./mvnw verify` | 214 unit, 76 integration, 0 failures |
 | Postman | Savings Goals folder added; run with increment 3 |
+
+### Increment 3: Dashboard APIs
+- `GET /api/dashboard/summary`: balances per currency (reusing the account service's live balances), cash flow per currency, this month's budget snapshot, active goals
+- `GET /api/dashboard/spending-by-category`: largest first, % of total (HALF_EVEN)
+- `GET /api/dashboard/monthly-trends`: 1–24 months, oldest first, empty months as zero, across year boundaries
+- New grouped queries: by currency and type, by month and type (`extract(year/month …)` in JPQL)
+- Tests: `DashboardServiceImplTest`, `DashboardIT` (two currencies, transfer excluded, budget snapshot, gaps, isolation)
+
+### Backend evidence for increments 1–3
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Unit tests | `./mvnw test` | 219 run, 0 failures |
+| Integration tests | `./mvnw verify` (dev DB stopped) | 81 run, 0 failures; V1–V7 on an empty database |
+| Upgrade path | dev database | V6 and V7 applied on top of V5 |
+| Postman | Newman on :8081 | 111 requests, 224 assertions, 0 failures (new folders: Budgets, Savings Goals, Dashboard) |
+
+The first Newman run had one failing assertion in the Dashboard folder. The assertion expected 100 of October expenses, but the Transactions folder deletes that expense earlier in the run, so 0 was correct. The assertion was fixed and the full collection rerun.
