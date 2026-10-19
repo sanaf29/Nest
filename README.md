@@ -212,21 +212,58 @@ The application is developed using a modular architecture and follows an Agile, 
 
 ## Getting Started
 
-### Backend Setup
+### Prerequisites
+
+- Java 21 (JDK)
+- Docker Desktop (on Apple Silicon, enable *Use Rosetta for x86/amd64 emulation*; the SQL Server image is amd64-only)
+- Optional: Postman or Node.js (to run the Postman collection with `npx newman`)
+
+### 1. Configure secrets
 
 ```bash
-git clone <repository-url>
+cp .env.example .env
+# Edit .env: set a strong NEST_DB_PASSWORD and a JWT key:
+openssl rand -base64 32   # paste the output as NEST_JWT_SECRET
+```
+
+`.env` is git-ignored. Docker Compose and the backend's `dev` profile both read it.
+
+### 2. Start SQL Server
+
+```bash
+docker compose up -d          # starts SQL Server 2022 and creates the `nest` database
+docker compose ps             # wait until nest-sqlserver is "healthy"
+```
+
+### 3. Run the backend
+
+```bash
 cd backend
-mvn spring-boot:run
+./mvnw spring-boot:run        # Flyway creates or updates the schema on startup
 ```
 
-### Frontend Setup
+- API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui.html (log in, then click **Authorize** and paste the `accessToken`)
+
+### 4. Run the tests
 
 ```bash
-cd frontend
-npm install
-npm start
+cd backend
+./mvnw test      # unit tests (no Docker needed)
+./mvnw verify    # unit + integration tests (Testcontainers starts a throwaway SQL Server)
 ```
+
+### 5. Exercise the API with Postman
+
+Import `postman/Nest.postman_collection.json` and `postman/Nest.local.postman_environment.json`, select the **Nest Local** environment, and run the collection. From the command line:
+
+```bash
+npx newman run postman/Nest.postman_collection.json -e postman/Nest.local.postman_environment.json
+```
+
+### Frontend
+
+The React frontend is planned for Sprint 2.
 
 ---
 
