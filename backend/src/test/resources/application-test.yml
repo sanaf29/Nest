@@ -1,0 +1,10 @@
+# Integration-test profile. The datasource is supplied by the Testcontainers SQL Server (@ServiceConnection).
+nest:
+  security:
+    # Low cost factor keeps tests fast; production uses 12.
+    bcrypt-strength: 4
+    jwt:
+      # Test-only key (32 bytes, Base64). Not used outside the test suite.
+      secret: bmVzdC10ZXN0LW9ubHktc2VjcmV0LWtleS0zMi1ieXRlcw==
+      issuer: nest
+      access-token-ttl: 15m
