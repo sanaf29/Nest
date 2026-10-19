@@ -611,6 +611,857 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Accounts",
+      "description": "Requires a token from 'Login \u2014 success'. Balances are derived, never set directly. DELETE closes (deactivates) an account.",
+      "item": [
+        {
+          "name": "Create account \u2014 checking (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Everyday Chequing {{$timestamp}}\",\n  \"accountType\": \"CHECKING\",\n  \"currency\": \"CAD\",\n  \"openingBalance\": 1500.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('Location header', () => pm.expect(pm.response.headers.get('Location')).to.eql(`/api/accounts/${b.id}`));",
+                  "pm.test('Balance derived from opening balance', () => {",
+                  "  pm.expect(b.openingBalance).to.eql(1500);",
+                  "  pm.expect(b.currentBalance).to.eql(1500);",
+                  "  pm.expect(b.active).to.be.true;",
+                  "});",
+                  "pm.environment.set('accountId', b.id);",
+                  "pm.environment.set('accountName', b.name);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create account \u2014 credit card, default currency (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            },
+            "description": "No currency given: the user's preferred currency is used. A negative balance on a credit card is the amount owed.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Visa {{$timestamp}}\",\n  \"accountType\": \"CREDIT_CARD\",\n  \"openingBalance\": -250.4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('Uses preferred currency (EUR after the profile update)', () => pm.expect(b.currency).to.eql('EUR'));",
+                  "pm.test('Debt is negative', () => pm.expect(b.currentBalance).to.eql(-250.4));",
+                  "pm.environment.set('creditCardId', b.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create account \u2014 duplicate name (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{accountName}}\",\n  \"accountType\": \"SAVINGS\",\n  \"openingBalance\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(409);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create account \u2014 negative savings (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Savings {{$timestamp}}\",\n  \"accountType\": \"SAVINGS\",\n  \"openingBalance\": -10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(422);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});",
+                  "pm.test('Explains the rule', () => pm.expect(pm.response.json().detail).to.include('negative opening balance'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create account \u2014 too many decimals (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Precise {{$timestamp}}\",\n  \"accountType\": \"CASH\",\n  \"currency\": \"CAD\",\n  \"openingBalance\": 10.555\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(422);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create account \u2014 invalid input (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"accountType\": \"BITCOIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(400);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List my accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const ids = pm.response.json().map(a => a.id);",
+                  "pm.test('Contains the new accounts', () => pm.expect(ids).to.include.members([pm.environment.get('accountId'), pm.environment.get('creditCardId')]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{accountId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Correct account', () => pm.expect(pm.response.json().id).to.eql(pm.environment.get('accountId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update account",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{accountId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{accountName}} (main)\",\n  \"openingBalance\": 1450.25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('Name and balance updated; currency unchanged', () => {",
+                  "  pm.expect(b.name).to.include('(main)');",
+                  "  pm.expect(b.currentBalance).to.eql(1450.25);",
+                  "  pm.expect(b.currency).to.eql('CAD');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get account \u2014 no token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{accountId}}"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', () => pm.response.to.have.status(401));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(401);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 register second user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Other\",\n  \"lastName\": \"User\",\n  \"email\": \"{{otherEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"preferredCurrency\": \"CAD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('otherEmail', `nest.other.${Date.now()}@example.test`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 log in second user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{otherEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('otherAuthToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 read first user's account (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{accountId}}"
+              ]
+            },
+            "description": "Another user's account is reported as not found, so its existence is not revealed.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherAuthToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(404);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 update first user's account (404)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{accountId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Stolen\",\n  \"openingBalance\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherAuthToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(404);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-user \u2014 delete first user's account (404)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{accountId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherAuthToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(404);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Close account (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{creditCardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{creditCardId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List accounts \u2014 closed hidden by default",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Closed account not listed', () => pm.expect(pm.response.json().map(a => a.id)).to.not.include(pm.environment.get('creditCardId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List accounts \u2014 includeInactive=true",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts?includeInactive=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts?includeInactive=true"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const closed = pm.response.json().find(a => a.id === pm.environment.get('creditCardId'));",
+                  "pm.test('Closed account kept with history', () => pm.expect(closed.active).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update closed account (422)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{creditCardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{creditCardId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Reopen\",\n  \"openingBalance\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+                  "pm.test('RFC 7807 problem body', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.status).to.eql(422);",
+                  "  pm.expect(b).to.have.property('title');",
+                  "  pm.expect(b).to.have.property('timestamp');",
+                  "  pm.expect(b).to.not.have.property('trace');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
