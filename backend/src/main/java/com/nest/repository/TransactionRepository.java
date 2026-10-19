@@ -1,6 +1,7 @@
 package com.nest.repository;
 
 import com.nest.model.Transaction;
+import com.nest.model.TransactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -36,4 +38,59 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             group by t.account.id, t.type
             """)
     List<AccountTypeTotal> sumByAccountAndType(@Param("accountIds") Collection<Long> accountIds);
+
+    // ---- Analytics (Sprint 2). All are scoped to one user, a date range, and the given types. ----
+    // Callers pass INCOME and EXPENSE only, so transfers never reach budgets or dashboards.
+
+    @Query("""
+            select new com.nest.repository.TypeTotal(t.type, sum(t.amount))
+            from Transaction t
+            where t.account.user.id = :userId
+              and t.account.currency = :currency
+              and t.transactionDate between :from and :to
+              and t.type in :types
+            group by t.type
+            """)
+    List<TypeTotal> sumByType(@Param("userId") Long userId, @Param("currency") String currency,
+                              @Param("from") LocalDate from, @Param("to") LocalDate to,
+                              @Param("types") Collection<TransactionType> types);
+
+    @Query("""
+            select new com.nest.repository.CurrencyTypeTotal(t.account.currency, t.type, sum(t.amount))
+            from Transaction t
+            where t.account.user.id = :userId
+              and t.transactionDate between :from and :to
+              and t.type in :types
+            group by t.account.currency, t.type
+            """)
+    List<CurrencyTypeTotal> sumByCurrencyAndType(@Param("userId") Long userId,
+                                                 @Param("from") LocalDate from, @Param("to") LocalDate to,
+                                                 @Param("types") Collection<TransactionType> types);
+
+    @Query("""
+            select new com.nest.repository.CategoryTotal(c.id, c.name, c.color, sum(t.amount))
+            from Transaction t join t.category c
+            where t.account.user.id = :userId
+              and t.account.currency = :currency
+              and t.transactionDate between :from and :to
+              and t.type = :type
+            group by c.id, c.name, c.color
+            """)
+    List<CategoryTotal> sumByCategory(@Param("userId") Long userId, @Param("currency") String currency,
+                                      @Param("from") LocalDate from, @Param("to") LocalDate to,
+                                      @Param("type") TransactionType type);
+
+    @Query("""
+            select new com.nest.repository.MonthlyTypeTotal(
+                extract(year from t.transactionDate), extract(month from t.transactionDate), t.type, sum(t.amount))
+            from Transaction t
+            where t.account.user.id = :userId
+              and t.account.currency = :currency
+              and t.transactionDate between :from and :to
+              and t.type in :types
+            group by extract(year from t.transactionDate), extract(month from t.transactionDate), t.type
+            """)
+    List<MonthlyTypeTotal> sumByMonthAndType(@Param("userId") Long userId, @Param("currency") String currency,
+                                             @Param("from") LocalDate from, @Param("to") LocalDate to,
+                                             @Param("types") Collection<TransactionType> types);
 }
