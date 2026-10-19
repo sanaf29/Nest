@@ -1,6 +1,8 @@
 # Secrets — never commit
 .env
 *.env
+.env.local
+.env.*.local
 !.env.example
 
 # Backend build output
@@ -8,10 +10,12 @@ backend/target/
 *.class
 *.log
 
-# Frontend build output (Sprint 2)
+# Frontend build output
 node_modules/
 dist/
 coverage/
+test-results/
+playwright-report/
 
 # IDE / OS
 .idea/
