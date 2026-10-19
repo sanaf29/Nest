@@ -16,15 +16,15 @@ Sprint 1 is backend-only. The React UI starts in Sprint 2.
 | 1.2 | Log in and stay authenticated | High | Done |
 | 1.3 | View and edit profile / preferred currency | Medium | Done |
 | 2.1 | Create checking, savings, cash, credit card accounts | High | Done |
-| 2.2 | See each account's current balance | High | Done (in review) |
+| 2.2 | See each account's current balance | High | Done |
 | 2.3 | Rename account / correct opening balance | Medium | Done |
 | 2.4 | Close an account without losing history | Medium | Done |
 | 3.1 | Default income and expense categories | High | Done |
 | 3.2 | Create own categories with colour | Medium | Done |
 | 3.3 | Archive categories safely | Medium | Done |
-| 4.1 | Record income and expenses | High | Done (in review) |
-| 4.2 | Search and filter transactions with pagination | High | Done (in review) |
-| 4.3 | Edit or delete a transaction | High | Done (in review; transfer-leg protection arrives with transfers in increment 5) |
+| 4.1 | Record income and expenses | High | Done |
+| 4.2 | Search and filter transactions with pagination | High | Done |
+| 4.3 | Edit or delete a transaction | High | Done (transfer-leg protection arrives with transfers in increment 5) |
 | 4.4 | Transfer between own accounts | High | Not Started |
 
 Acceptance criteria for each item are in [PB.md](../sprint0/PB.md).
@@ -33,7 +33,7 @@ Acceptance criteria for each item are in [PB.md](../sprint0/PB.md).
 
 ## Implementation Steps
 
-The sprint is built in independently reviewable increments. Each increment has its own feature branch and pull request into `develop`.
+The sprint is built in independently reviewable increments, each on its own feature branch. Increments 0–3 were merged into `main` through pull requests; from increment 4 onward, branches are fast-forwarded into `main` after local verification (see [process.md](../sprint0/process.md#branching-strategy)).
 
 | # | Increment | Branch | Contents | Status |
 |---|-----------|--------|----------|--------|
@@ -41,7 +41,7 @@ The sprint is built in independently reviewable increments. Each increment has i
 | 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | Done (PR #2) |
 | 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | Done (PR #3) |
 | 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | Done (PR #4) |
-| 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | In Review |
+| 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Done (pushed to `main`) |
 | 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | Not Started |
 | 6 | Sprint close | `docs/sprint1-review` | As-built UML, sequence diagrams, CRC, `testing.md`, `SR1.md`, README | Not Started |
 

@@ -28,20 +28,21 @@ A sprint ends only when its Definition of Done (below and in each sprint plan) i
 
 ## Branching Strategy
 
-Nest uses a simplified Git Flow:
+Nest is a solo project, so it uses trunk-based development with short-lived branches:
 
 ```text
-main         ← released, demo-ready code only (merged from develop at the end of a sprint)
-develop      ← integration branch; always builds and passes tests
-feature/*    ← one branch per backlog feature, e.g. feature/authentication
-docs/*       ← documentation-only changes, e.g. docs/sprint0-planning
+main         ← always builds and passes every test; the only long-lived branch
+feature/*    ← one branch per increment, e.g. feature/transactions
+docs/*       ← documentation-only changes, e.g. docs/sprint1-review
 fix/*        ← bug fixes found after a feature has merged
 ```
 
-- Branch from `develop`. Merge back into `develop` with a pull request.
-- Create branches when work starts, not in advance.
-- `develop` → `main` at the end of each sprint, after the sprint review, tagged `sprint-N`.
-- Never commit directly to `main`.
+- Create a branch from the latest `main` when work starts, never in advance.
+- Integrate by fast-forwarding `main` onto the finished branch, then push (see *Integrating Into main* below).
+- At the end of each sprint, after the review, tag `main` as `sprint-N`.
+- Delete feature branches once they are merged.
+
+**Change from the original plan.** Sprint 0 planned Git Flow, with a `develop` integration branch and a pull request for every feature. With one developer, `develop` only duplicated `main`, and PR review had no second reviewer. The first four increments went through PRs #1–#4; from increment 4 (transactions) onward, branches are fast-forwarded into `main` directly. The quality gate is unchanged, because the checks below must pass locally before anything reaches `main`.
 
 ## Commit Conventions
 
@@ -69,20 +70,29 @@ Example: `feat(transfers): record transfers as linked TRANSFER_OUT/TRANSFER_IN e
 
 **Never commit:** `.env` files, passwords, JWT secrets, `target/` or `node_modules/` build output, IDE settings, or real financial data. `.gitignore` enforces the common cases.
 
-## Pull Request Process
+## Integrating Into main
 
-1. Before opening a PR, run `./mvnw verify` (backend) and `npm test` (frontend, from Sprint 2) locally. Both must pass.
-2. Write the PR description with:
-   - linked backlog item IDs (e.g. "Implements PB 1.1, 1.2")
-   - a summary of the design decisions
-   - how to test it (commands and Postman requests)
-   - screenshots for UI changes
-3. Keep each PR small enough to review in one sitting. Split large features into model/persistence and API PRs if needed.
-4. Squash-merge into `develop` with a Conventional Commit title.
+1. Rebase the branch on the latest `main` if `main` has moved (`git fetch && git rebase origin/main`).
+2. Run every check locally. All must pass:
+   - `./mvnw verify` (backend unit + integration tests)
+   - the Postman collection via Newman against the dev database
+   - `npm test` (frontend, from Sprint 2)
+3. Review your own diff against the *Code Review Checklist* below (`git diff main...HEAD`).
+4. Record the increment in the sprint plan: status, checklist, and test evidence with the actual numbers.
+5. Fast-forward and push:
+   ```bash
+   git checkout main
+   git merge --ff-only feature/<name>
+   git push origin main
+   ```
+   `--ff-only` refuses to create a merge commit, which keeps history linear and guarantees `main` is exactly the commit that was tested.
+6. Each commit message carries what a PR description would have: backlog IDs (e.g. "Implements PB 4.1"), the design decisions, and anything a reviewer should know.
+
+A pull request is still worth opening when an outside reviewer (an instructor, a teammate, or an AI reviewer) should look at a change before it lands.
 
 ## Code Review Checklist
 
-The reviewer checks:
+Before integrating, the author (or a reviewer, when there is one) checks:
 
 - **Correctness:** acceptance criteria are met, edge cases are handled, and money uses `BigDecimal`.
 - **Security:** every query on user-owned data is scoped by the authenticated user, there are no secrets in code, and DTOs expose no sensitive fields.
@@ -114,4 +124,4 @@ A backlog item is **Done** when:
 5. **API verified:** Postman requests (happy path + failure cases) are added to the collection, and the endpoint appears in Swagger UI.
 6. **Database:** the schema change is a new Flyway migration that applies cleanly to an empty SQL Server database.
 7. **Documented:** UML/ERD and sprint docs are updated, and any non-obvious decision is explained.
-8. **Reviewed and merged:** the PR is approved and merged into `develop`, and `develop` builds green.
+8. **Reviewed and integrated:** the diff passes the review checklist, the branch is fast-forwarded into `main`, and `main` builds green.
