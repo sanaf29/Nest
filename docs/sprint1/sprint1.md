@@ -12,9 +12,9 @@ Sprint 1 is backend-only. The React UI starts in Sprint 2.
 
 | PB ID | User Story | Priority | Status |
 |-------|------------|----------|--------|
-| 1.1 | Register with email and password | High | Not Started |
-| 1.2 | Log in and stay authenticated | High | Not Started |
-| 1.3 | View and edit profile / preferred currency | Medium | Not Started |
+| 1.1 | Register with email and password | High | Done (in review) |
+| 1.2 | Log in and stay authenticated | High | Done (in review) |
+| 1.3 | View and edit profile / preferred currency | Medium | Done (in review) |
 | 2.1 | Create checking, savings, cash, credit card accounts | High | Not Started |
 | 2.2 | See each account's current balance | High | Not Started |
 | 2.3 | Rename account / correct opening balance | Medium | Not Started |
@@ -38,7 +38,7 @@ The sprint is built in independently reviewable increments. Each increment has i
 | # | Increment | Branch | Contents | Status |
 |---|-----------|--------|----------|--------|
 | 0 | Planning | `docs/sprint0-planning` | Sprint 0 documents, this plan | In Review |
-| 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | Not Started |
+| 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | In Review |
 | 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | Not Started |
 | 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | Not Started |
 | 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Not Started |
@@ -48,21 +48,21 @@ The sprint is built in independently reviewable increments. Each increment has i
 ## Task Breakdown
 
 ### Increment 1: Backend foundation and authentication
-- [ ] Maven project (Java 21, Spring Boot 3.5.x), Maven wrapper, package structure
-- [ ] `application.yml` with `dev` and `test` profiles; secrets supplied through environment variables
-- [ ] `docker-compose.yml` for SQL Server 2022; `.env.example`
-- [ ] Flyway `V1__create_users.sql`
-- [ ] `AuditableEntity`, `User`
-- [ ] `UserRepository`
-- [ ] Exception hierarchy + `GlobalExceptionHandler` (RFC 7807)
-- [ ] JWT configuration, `TokenService`, `CurrentUserProvider`, security filter chain, JSON 401/403 handlers
-- [ ] `AuthService`, `UserService` + implementations
-- [ ] Request/response DTOs, `UserMapper`, `@ValidCurrency`
-- [ ] `AuthController`, `UserController`
-- [ ] OpenAPI configuration with bearer auth
-- [ ] Unit tests: `User`, `AuthServiceImpl`, `UserServiceImpl`, `JwtTokenService`
-- [ ] Integration tests: auth and profile flows over HTTP against SQL Server (Testcontainers)
-- [ ] Postman collection: Authentication, Users folders + environment
+- [x] Maven project (Java 21, Spring Boot 3.5.x), Maven wrapper, package structure
+- [x] `application.yml` with `dev` and `test` profiles; secrets supplied through environment variables
+- [x] `docker-compose.yml` for SQL Server 2022; `.env.example`
+- [x] Flyway `V1__create_users.sql`
+- [x] `AuditableEntity`, `User`
+- [x] `UserRepository`
+- [x] Exception hierarchy + `GlobalExceptionHandler` (RFC 7807)
+- [x] JWT configuration, `TokenService`, `CurrentUserProvider`, security filter chain, JSON 401/403 handlers
+- [x] `AuthService`, `UserService` + implementations
+- [x] Request/response DTOs, `UserMapper`, `@ValidCurrency`
+- [x] `AuthController`, `UserController`
+- [x] OpenAPI configuration with bearer auth
+- [x] Unit tests: `User`, `AuthServiceImpl`, `UserServiceImpl`, `JwtTokenService`
+- [x] Integration tests: auth and profile flows over HTTP against SQL Server (Testcontainers)
+- [x] Postman collection: Authentication, Users folders + environment
 
 ---
 
@@ -106,3 +106,16 @@ Updated as each increment is merged.
 | Increment | Summary | Evidence |
 |-----------|---------|----------|
 | 0 | Sprint 0 planning documents | `docs/sprint0/` |
+| 1 | Backend foundation + authentication (PB 1.1–1.3) | See "Increment 1 test evidence" below |
+
+### Increment 1 test evidence
+
+Run on 2026-10-19 with JDK 21.0.8, Docker Desktop 28.5.1, and SQL Server 2022 (amd64 under emulation on Apple Silicon).
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Unit tests | `./mvnw test` | 50 run, 0 failures (`UserTest`, `CurrenciesTest`, `AuthServiceImplTest`, `UserServiceImplTest`, `JwtTokenServiceTest`) |
+| Integration tests | `./mvnw verify` | 16 run, 0 failures (`AuthIT`, `UserProfileIT`) against a Testcontainers SQL Server; Flyway V1 applied; Hibernate `validate` passed |
+| Dev stack | `docker compose up -d` + `./mvnw spring-boot:run` | `nest` database created; V1 applied; app started on :8080 |
+| Swagger | `GET /swagger-ui.html` | 302 → `/swagger-ui/index.html` 200 |
+| Postman | `npx newman run postman/...` | 11 requests, 31 assertions, 0 failures |

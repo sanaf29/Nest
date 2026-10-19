@@ -1,0 +1,42 @@
+# Local SQL Server for development.
+#   cp .env.example .env   # then set NEST_DB_PASSWORD and NEST_JWT_SECRET
+#   docker compose up -d
+# The image is amd64-only; on Apple Silicon, Docker Desktop runs it under Rosetta emulation.
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: nest-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${NEST_DB_PASSWORD:?Set NEST_DB_PASSWORD in .env}
+    ports:
+      - "${NEST_DB_PORT:-1433}:1433"
+    volumes:
+      - nest-sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  # One-shot job: creates the application database. Flyway then creates the tables when the backend starts.
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${NEST_DB_PASSWORD}
+      NEST_DB_NAME: ${NEST_DB_NAME:-nest}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - /opt/mssql-tools18/bin/sqlcmd -C -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -b -Q "IF DB_ID('$$NEST_DB_NAME') IS NULL CREATE DATABASE [$$NEST_DB_NAME];"
+    restart: "no"
+
+volumes:
+  nest-sqlserver-data:
