@@ -1,0 +1,108 @@
+# Sprint 1 Planning — Nest
+
+## Sprint Goal
+
+Deliver a secure, tested Spring Boot backend. A user can register, log in, and manage financial accounts, categories, transactions, and transfers. All data is persisted in SQL Server through Flyway migrations and exercised through Swagger and Postman.
+
+Sprint 1 is backend-only. The React UI starts in Sprint 2.
+
+---
+
+## Selected Backlog Items
+
+| PB ID | User Story | Priority | Status |
+|-------|------------|----------|--------|
+| 1.1 | Register with email and password | High | Not Started |
+| 1.2 | Log in and stay authenticated | High | Not Started |
+| 1.3 | View and edit profile / preferred currency | Medium | Not Started |
+| 2.1 | Create checking, savings, cash, credit card accounts | High | Not Started |
+| 2.2 | See each account's current balance | High | Not Started |
+| 2.3 | Rename account / correct opening balance | Medium | Not Started |
+| 2.4 | Close an account without losing history | Medium | Not Started |
+| 3.1 | Default income and expense categories | High | Not Started |
+| 3.2 | Create own categories with colour | Medium | Not Started |
+| 3.3 | Archive categories safely | Medium | Not Started |
+| 4.1 | Record income and expenses | High | Not Started |
+| 4.2 | Search and filter transactions with pagination | High | Not Started |
+| 4.3 | Edit or delete a transaction | High | Not Started |
+| 4.4 | Transfer between own accounts | High | Not Started |
+
+Acceptance criteria for each item are in [PB.md](../sprint0/PB.md).
+
+---
+
+## Implementation Steps
+
+The sprint is built in independently reviewable increments. Each increment has its own feature branch and pull request into `develop`.
+
+| # | Increment | Branch | Contents | Status |
+|---|-----------|--------|----------|--------|
+| 0 | Planning | `docs/sprint0-planning` | Sprint 0 documents, this plan | In Review |
+| 1 | Backend foundation + authentication | `feature/authentication` | Maven project, config profiles, Docker Compose for SQL Server, Flyway V1 (`users`), error handling, JWT security, `AuthService`, `UserService`, `/api/auth/*`, `/api/users/me`, tests, Postman (Auth + Users) | Not Started |
+| 2 | Account management | `feature/account-management` | `FinancialAccount`, `Money`, balance calculation, V2 migration, `/api/accounts`, tests, Postman | Not Started |
+| 3 | Categories | `feature/categories` | `Category`, default seed, archive rules, V3 migration, `/api/categories`, tests, Postman | Not Started |
+| 4 | Transactions | `feature/transactions` | `Transaction`, `TransactionType`, Specifications, V4 migration, `/api/transactions`, tests, Postman | Not Started |
+| 5 | Transfers | `feature/transfers` | `Transfer` factory, atomic service, `/api/transfers`, tests, Postman | Not Started |
+| 6 | Sprint close | `docs/sprint1-review` | As-built UML, sequence diagrams, CRC, `testing.md`, `SR1.md`, README | Not Started |
+
+## Task Breakdown
+
+### Increment 1: Backend foundation and authentication
+- [ ] Maven project (Java 21, Spring Boot 3.5.x), Maven wrapper, package structure
+- [ ] `application.yml` with `dev` and `test` profiles; secrets supplied through environment variables
+- [ ] `docker-compose.yml` for SQL Server 2022; `.env.example`
+- [ ] Flyway `V1__create_users.sql`
+- [ ] `AuditableEntity`, `User`
+- [ ] `UserRepository`
+- [ ] Exception hierarchy + `GlobalExceptionHandler` (RFC 7807)
+- [ ] JWT configuration, `TokenService`, `CurrentUserProvider`, security filter chain, JSON 401/403 handlers
+- [ ] `AuthService`, `UserService` + implementations
+- [ ] Request/response DTOs, `UserMapper`, `@ValidCurrency`
+- [ ] `AuthController`, `UserController`
+- [ ] OpenAPI configuration with bearer auth
+- [ ] Unit tests: `User`, `AuthServiceImpl`, `UserServiceImpl`, `JwtTokenService`
+- [ ] Integration tests: auth and profile flows over HTTP against SQL Server (Testcontainers)
+- [ ] Postman collection: Authentication, Users folders + environment
+
+---
+
+## Technical Decisions
+
+These are summarised here; [system_design.md](../sprint0/system_design.md) gives the full reasoning.
+
+| Decision | Choice |
+|----------|--------|
+| Authentication | Stateless JWT (HS256) through Spring OAuth2 Resource Server. `sub` = user id. Lifetime 60 minutes by default. |
+| Cross-user access | User-scoped queries; a resource owned by someone else returns 404 |
+| Error format | RFC 7807 `ProblemDetail` with `timestamp` and a field `errors` list |
+| Money | `BigDecimal` / `DECIMAL(19,4)`; reject excess precision; `HALF_EVEN` for derived values |
+| Balance | Derived from the opening balance and transactions; never stored |
+| Transfers | `Transfer` + two legs (`TRANSFER_OUT`, `TRANSFER_IN`), created atomically |
+| Deletion | Accounts are deactivated, categories archived, transactions hard-deleted |
+| Concurrency | `@Version` optimistic locking → 409 |
+| Schema | Flyway migrations; Hibernate `ddl-auto=validate` |
+
+---
+
+## Sprint 1 Definition of Done
+
+- [ ] Backend builds successfully (`./mvnw verify`)
+- [ ] SQL Server connection works (Docker Compose)
+- [ ] Migrations execute successfully on an empty database
+- [ ] Authentication works
+- [ ] Accounts and transactions persist
+- [ ] REST APIs can be exercised in Postman
+- [ ] Ownership restrictions work (cross-user tests)
+- [ ] Unit and integration tests pass
+- [ ] Swagger UI is accessible at `/swagger-ui.html`
+- [ ] UML and sprint documentation are complete
+
+---
+
+## Completed Work
+
+Updated as each increment is merged.
+
+| Increment | Summary | Evidence |
+|-----------|---------|----------|
+| 0 | Sprint 0 planning documents | `docs/sprint0/` |
