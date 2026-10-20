@@ -9,6 +9,7 @@ import com.nest.repository.TypeTotal;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
@@ -59,5 +60,13 @@ public class LedgerAnalytics {
     public List<CategoryTotal> expensesByCategory(long userId, YearMonth month, String currency) {
         return transactionRepository.sumByCategory(userId, currency, month.atDay(1), month.atEndOfMonth(),
                 TransactionType.EXPENSE);
+    }
+
+    /** Total expenses in a currency over an inclusive date range. */
+    @Transactional(readOnly = true)
+    public Money totalExpenses(long userId, String currency, LocalDate from, LocalDate to) {
+        return transactionRepository.sumByType(userId, currency, from, to, Set.of(TransactionType.EXPENSE)).stream()
+                .map(total -> Money.of(total.total(), currency))
+                .reduce(Money.zero(currency), Money::plus);
     }
 }
