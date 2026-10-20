@@ -35,7 +35,7 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 | 3 | Dashboard APIs | `feature/dashboard` | Balances by currency, cash flow, spending by category, monthly trends | Done |
 | 4 | Frontend foundation | `feature/frontend-foundation` | Vite + React + TS + Tailwind, API client, auth context, protected routes, layout, login/register | Done |
 | 5 | Frontend features | `feature/frontend-*` | Dashboard, accounts, transactions + transfers + categories, budget planner, goals, calendar | Done |
-| 6 | Sprint close | `docs/sprint2-review` | Updated class diagram, sequence diagrams, testing, SR2 | Not Started |
+| 6 | Sprint close | `docs/sprint2-review` | Updated class diagram, sequence diagrams, testing, SR2 | Done |
 
 ## Technical Decisions
 

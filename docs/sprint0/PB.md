@@ -84,10 +84,10 @@ Requirement references (FR-x / NFR-x) point to [requirements.md](requirements.md
 
 | ID | User Story | Priority | Sprint | Status |
 |----|------------|----------|--------|--------|
-| 5.1 | As a user, I want to create a budget for a month with my planned income, so that I can plan my spending. | High | 2 | Not Started |
-| 5.2 | As a user, I want to set aside savings as a percentage or a fixed amount, so that I pay myself first. | High | 2 | Not Started |
-| 5.3 | As a user, I want to assign spending limits to categories, so that I can control where my money goes. | High | 2 | Not Started |
-| 5.4 | As a user, I want to see actual spending vs. my limits and what remains, so that I can adjust before overspending. | High | 2 | Not Started |
+| 5.1 | As a user, I want to create a budget for a month with my planned income, so that I can plan my spending. | High | 2 | Done |
+| 5.2 | As a user, I want to set aside savings as a percentage or a fixed amount, so that I pay myself first. | High | 2 | Done |
+| 5.3 | As a user, I want to assign spending limits to categories, so that I can control where my money goes. | High | 2 | Done |
+| 5.4 | As a user, I want to see actual spending vs. my limits and what remains, so that I can adjust before overspending. | High | 2 | Done |
 
 **Acceptance criteria (summary)** One budget per user, month, and currency (`409` on duplicate). Allocations total no more than the income available after savings. Calculations use `BigDecimal` with HALF_EVEN rounding to the currency's minor units. A transaction belongs to the month of its `transactionDate`. Transfers are excluded from all totals.
 
@@ -95,9 +95,9 @@ Requirement references (FR-x / NFR-x) point to [requirements.md](requirements.md
 
 | ID | User Story | Priority | Sprint | Status |
 |----|------------|----------|--------|--------|
-| 6.1 | As a user, I want to create a savings goal with a target amount and date, so that I have something concrete to work toward. | High | 2 | Not Started |
-| 6.2 | As a user, I want to record contributions and see my progress percentage, so that I stay motivated. | High | 2 | Not Started |
-| 6.3 | As a user, I want achieved goals to be marked automatically, so that I can celebrate and review them. | Medium | 2 | Not Started |
+| 6.1 | As a user, I want to create a savings goal with a target amount and date, so that I have something concrete to work toward. | High | 2 | Done |
+| 6.2 | As a user, I want to record contributions and see my progress percentage, so that I stay motivated. | High | 2 | Done |
+| 6.3 | As a user, I want achieved goals to be marked automatically, so that I can celebrate and review them. | Medium | 2 | Done |
 
 **Acceptance criteria (summary)** Contributions are positive, and a contribution cannot be recorded twice (idempotency key). Progress = contributions ÷ target, capped at 100% for display. The goal becomes ACHIEVED when contributions ≥ target.
 
@@ -105,17 +105,17 @@ Requirement references (FR-x / NFR-x) point to [requirements.md](requirements.md
 
 | ID | User Story | Priority | Sprint | Status |
 |----|------------|----------|--------|--------|
-| 7.1 | As a user, I want a dashboard with balances, income, expenses, and net cash flow, so that I understand my finances at a glance. | High | 2 | Not Started |
-| 7.2 | As a user, I want charts of spending by category and monthly trends, so that I can spot habits. | High | 2 | Not Started |
-| 7.3 | As a user, I want a monthly calendar of my transactions, so that I can see when money moves. | Medium | 2 | Not Started |
+| 7.1 | As a user, I want a dashboard with balances, income, expenses, and net cash flow, so that I understand my finances at a glance. | High | 2 | Done |
+| 7.2 | As a user, I want charts of spending by category and monthly trends, so that I can spot habits. | High | 2 | Done |
+| 7.3 | As a user, I want a monthly calendar of my transactions, so that I can see when money moves. | Medium | 2 | Done |
 
 ## Epic 8: Web Frontend — Sprint 2
 
 | ID | User Story | Priority | Sprint | Status |
 |----|------------|----------|--------|--------|
-| 8.1 | As a user, I want to register and log in through the website, so that I can use Nest without technical tools. | High | 2 | Not Started |
-| 8.2 | As a user, I want to manage accounts, categories, transactions, and transfers in the UI, so that I can do everything from one place. | High | 2 | Not Started |
-| 8.3 | As a user, I want the app to work well on my phone, so that I can log expenses on the go. | Medium | 2 | Not Started |
+| 8.1 | As a user, I want to register and log in through the website, so that I can use Nest without technical tools. | High | 2 | Done |
+| 8.2 | As a user, I want to manage accounts, categories, transactions, and transfers in the UI, so that I can do everything from one place. | High | 2 | Done |
+| 8.3 | As a user, I want the app to work well on my phone, so that I can log expenses on the go. | Medium | 2 | Done |
 
 ## Epic 9: Financial Insights — Sprint 3
 

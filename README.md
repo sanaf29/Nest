@@ -14,20 +14,24 @@ Nest is built as a layered, object-oriented Spring Boot API backed by SQL Server
 |--------|-------|--------|
 | 0 | Planning and system design | Done |
 | 1 | Backend foundation: auth, accounts, categories, transactions, transfers | Done |
-| 2 | Budgets, savings goals, dashboard, React frontend | In progress |
+| 2 | Budgets, savings goals, dashboard, React frontend | Done |
 | 3 | Insights, recurring transactions, reminders, expense splitting, reports | Planned |
 
 The release plan is in [`docs/sprint0/RPM.md`](docs/sprint0/RPM.md); sprint documents are in [`docs/`](docs/).
 
 ---
 
-## Features (Sprint 1)
+## Features
 
 - **Secure accounts:** registration, login with JWT bearer tokens, BCrypt password hashing, profile and preferred currency.
 - **Financial accounts:** checking, savings, cash, and credit card accounts. Balances are always derived from the opening balance plus recorded activity; they are never edited directly. Closing an account keeps its history.
 - **Categories:** 21 built-in income and expense categories plus your own, with colours. Deleting a category archives it, so past transactions keep it.
 - **Transactions:** income and expenses with search by account, category, type, date range, amount range, and text, with pagination.
 - **Transfers:** move money between your own accounts. Recorded atomically as two linked entries and never counted as income or spending.
+- **Monthly budgets:** planned income, savings as a percentage or fixed amount, category limits, and a live plan-vs-actual view with on-track / near-limit / over-limit status.
+- **Savings goals:** targets with deadlines, contributions (safe to retry), automatic "achieved" status.
+- **Dashboard:** balances and cash flow per currency, spending by category, 6-month trends, budget and goal progress.
+- **Web app:** responsive React UI for everything above, including a monthly transaction calendar.
 - **Privacy by design:** every query is scoped to the authenticated user. Another user's data is indistinguishable from data that doesn't exist (404).
 
 ---
