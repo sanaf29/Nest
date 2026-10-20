@@ -15,7 +15,7 @@ export interface NavSection {
 export const navigation: NavSection[] = [
   {
     items: [
-      { to: '/', label: 'Dashboard', icon: 'dashboard' },
+      { to: '/', label: 'Home', icon: 'home' },
       { to: '/accounts', label: 'Accounts', icon: 'wallet' },
       { to: '/transactions', label: 'Transactions', icon: 'list' },
       { to: '/calendar', label: 'Calendar', icon: 'calendar' },
@@ -40,3 +40,15 @@ export const navigation: NavSection[] = [
     ],
   },
 ];
+
+/** The phone tab bar: four destinations around the raised Add button. */
+export const tabs: { left: NavItem[]; right: NavItem[] } = {
+  left: [
+    { to: '/', label: 'Home', icon: 'home' },
+    { to: '/transactions', label: 'Transactions', icon: 'list' },
+  ],
+  right: [
+    { to: '/insights', label: 'Insights', icon: 'chart' },
+    { to: '/settings', label: 'Profile', icon: 'user' },
+  ],
+};

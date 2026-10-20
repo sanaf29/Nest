@@ -14,6 +14,7 @@ import { useAsync } from '../hooks/useAsync';
 import { useReferenceData } from '../hooks/useReferenceData';
 import { transactionService, transferService } from '../services/transactionService';
 import type { TransactionFilter, TransactionResponse, TransactionType } from '../types/api';
+import { cn } from '../utils/cn';
 
 const PAGE_SIZE = 25;
 
@@ -35,6 +36,7 @@ export function TransactionsPage() {
   const [page, setPage] = useState(0);
   const [dialog, setDialog] = useState<'expense' | 'transfer' | TransactionResponse | null>(null);
   const [deleting, setDeleting] = useState<TransactionResponse | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const results = useAsync(() => transactionService.search({ ...filter, q, page, size: PAGE_SIZE }), [JSON.stringify(filter), q, page]);
   const update = (patch: Partial<TransactionFilter>) => {
@@ -64,59 +66,62 @@ export function TransactionsPage() {
         }
       />
 
-      <Card className="mb-6" bodyClassName="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        <TextField label="Search" type="search" placeholder="Description" value={text} onChange={(e) => { setPage(0); setText(e.target.value); }} containerClassName="lg:col-span-2" />
-        <SelectField label="Type" value={filter.type ?? ''} onChange={(e) => update({ type: (e.target.value || undefined) as TransactionType | undefined })}>
-          <option value="">All</option>
-          <option value="EXPENSE">Expenses</option>
-          <option value="INCOME">Income</option>
-          <option value="TRANSFER_OUT">Transfers</option>
-        </SelectField>
-        <SelectField label="Account" value={filter.accountId ?? ''} onChange={(e) => update({ accountId: e.target.value ? Number(e.target.value) : undefined })}>
-          <option value="">All</option>
-          {reference.accounts.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </SelectField>
-        <TextField label="From" type="date" value={filter.from ?? ''} onChange={(e) => update({ from: e.target.value || undefined })} />
-        <TextField label="To" type="date" value={filter.to ?? ''} onChange={(e) => update({ to: e.target.value || undefined })} />
-        <SelectField label="Category" value={filter.categoryId ?? ''} onChange={(e) => update({ categoryId: e.target.value ? Number(e.target.value) : undefined })} containerClassName="lg:col-span-2">
-          <option value="">All</option>
-          {reference.categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} ({c.categoryType === 'INCOME' ? 'income' : 'expense'})
-            </option>
-          ))}
-        </SelectField>
-        <SelectField label="Sort" value={filter.sort} onChange={(e) => update({ sort: e.target.value })} containerClassName="lg:col-span-2">
-          <option value="transactionDate,desc">Newest first</option>
-          <option value="transactionDate,asc">Oldest first</option>
-          <option value="amount,desc">Largest amount</option>
-          <option value="amount,asc">Smallest amount</option>
-        </SelectField>
+      <Card className="mb-6" bodyClassName="flex flex-col gap-3">
+        <div className="flex items-end gap-2">
+          <TextField label="Search" type="search" placeholder="Description" value={text} onChange={(e) => { setPage(0); setText(e.target.value); }} containerClassName="flex-1" />
+          <Button variant="secondary" className="h-[42px] lg:hidden" onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters} icon={<Icon name="settings" className="h-4 w-4" />}>
+            Filters
+          </Button>
+        </div>
+        <div className={cn('grid-cols-1 gap-3 sm:grid-cols-2 lg:grid lg:grid-cols-6', showFilters ? 'grid animate-rise' : 'hidden')}>
+          <SelectField label="Type" value={filter.type ?? ''} onChange={(e) => update({ type: (e.target.value || undefined) as TransactionType | undefined })}>
+            <option value="">All</option>
+            <option value="EXPENSE">Expenses</option>
+            <option value="INCOME">Income</option>
+            <option value="TRANSFER_OUT">Transfers</option>
+          </SelectField>
+          <SelectField label="Account" value={filter.accountId ?? ''} onChange={(e) => update({ accountId: e.target.value ? Number(e.target.value) : undefined })}>
+            <option value="">All</option>
+            {reference.accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </SelectField>
+          <TextField label="From" type="date" value={filter.from ?? ''} onChange={(e) => update({ from: e.target.value || undefined })} />
+          <TextField label="To" type="date" value={filter.to ?? ''} onChange={(e) => update({ to: e.target.value || undefined })} />
+          <SelectField label="Category" value={filter.categoryId ?? ''} onChange={(e) => update({ categoryId: e.target.value ? Number(e.target.value) : undefined })}>
+            <option value="">All</option>
+            {reference.categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.categoryType === 'INCOME' ? 'income' : 'expense'})
+              </option>
+            ))}
+          </SelectField>
+          <SelectField label="Sort" value={filter.sort} onChange={(e) => update({ sort: e.target.value })}>
+            <option value="transactionDate,desc">Newest first</option>
+            <option value="transactionDate,asc">Oldest first</option>
+            <option value="amount,desc">Largest amount</option>
+            <option value="amount,asc">Smallest amount</option>
+          </SelectField>
+        </div>
         {hasFilters && (
-          <div className="flex items-end lg:col-span-2">
-            <Button variant="ghost" onClick={() => { setText(''); setPage(0); setFilter({ sort: filter.sort }); }}>
-              Clear filters
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" className="self-start" onClick={() => { setText(''); setPage(0); setFilter({ sort: filter.sort }); }}>
+            Clear filters
+          </Button>
         )}
       </Card>
 
-      <Card bodyClassName="p-0" title={results.data ? `${results.data.totalElements} transaction${results.data.totalElements === 1 ? '' : 's'}` : undefined}>
+      <Card bodyClassName="p-2 sm:p-3" title={results.data ? `${results.data.totalElements} transaction${results.data.totalElements === 1 ? '' : 's'}` : undefined}>
         {results.loading && !results.data ? (
           <LoadingState />
         ) : results.error ? (
-          <div className="p-5">
-            <ErrorState error={results.error} onRetry={results.reload} />
-          </div>
+          <ErrorState error={results.error} onRetry={results.reload} />
         ) : results.data && results.data.content.length > 0 ? (
           <>
-            <TransactionList transactions={results.data.content} onEdit={(t) => setDialog(t)} onDelete={setDeleting} />
+            <TransactionList transactions={results.data.content} categories={reference.categories} onEdit={(t) => setDialog(t)} onDelete={setDeleting} />
             {results.data.totalPages > 1 && (
-              <nav aria-label="Pagination" className="flex items-center justify-between border-t border-ink-100 px-5 py-3 text-sm">
+              <nav aria-label="Pagination" className="mt-2 flex items-center justify-between border-t border-ink-100 px-3 pt-3 text-sm">
                 <Button variant="secondary" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
                   Previous
                 </Button>

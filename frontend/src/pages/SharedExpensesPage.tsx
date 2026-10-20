@@ -58,7 +58,7 @@ export function SharedExpensesPage() {
       ) : expenses.data && expenses.data.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {expenses.data.map((e) => (
-            <article key={e.id} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ink-200/70">
+            <article key={e.id} className="animate-rise rounded-3xl bg-surface p-5 shadow-card ring-1 ring-line/40">
               <header className="mb-3 flex items-start justify-between gap-2">
                 <div>
                   <h2 className="font-semibold text-ink-900">{e.description}</h2>

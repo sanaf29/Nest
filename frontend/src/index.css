@@ -1,52 +1,169 @@
 @import "tailwindcss";
 
-/* Design tokens. Components use these names (bg-brand-600, text-ink-700, …) rather than raw
-   palette colours, so the look can change in one place. */
+/*
+ * Design tokens. Components use these names (bg-surface, text-ink-900, bg-brand-600, …) rather
+ * than raw colours, so the look changes in one place.
+ *
+ * Dark ("midnight") is the default theme. The ink scale is semantic, not literal: ink-900 is
+ * always the strongest text and ink-50 the faintest fill, so the same classes work in both
+ * themes. The light theme overrides the variables under :root[data-theme="light"].
+ */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-200: #99f6e4;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
-  --color-brand-900: #134e4a;
+  /* Surfaces */
+  --color-canvas: #111728; /* page background */
+  --color-surface: #1b2540; /* cards */
+  --color-surface-2: #22304f; /* inputs, raised rows */
+  --color-line: #334e73; /* borders and rings */
+  --color-hero-from: #507da8; /* gradient feature cards */
+  --color-hero-to: #253653;
+  --color-nav: #1e2a47; /* bottom navigation */
 
-  --color-accent-100: #fef3c7;
-  --color-accent-500: #f59e0b;
-  --color-accent-600: #d97706;
+  /* Text and neutral fills (semantic: 900 = strongest text) */
+  --color-ink-50: #172036;
+  --color-ink-100: #24314f;
+  --color-ink-200: #334e73;
+  --color-ink-300: #4a6489;
+  --color-ink-400: #8392ad;
+  --color-ink-500: #a9b6cc;
+  --color-ink-600: #bcc7d9;
+  --color-ink-700: #d3dae6;
+  --color-ink-800: #e7ebf3;
+  --color-ink-900: #f8f9fc;
 
-  --color-ink-50: #f8fafc;
-  --color-ink-100: #f1f5f9;
-  --color-ink-200: #e2e8f0;
-  --color-ink-300: #cbd5e1;
-  --color-ink-400: #94a3b8;
-  --color-ink-500: #64748b;
-  --color-ink-600: #475569;
-  --color-ink-700: #334155;
-  --color-ink-800: #1e293b;
-  --color-ink-900: #0f172a;
+  /* Primary accent: soft coral */
+  --color-brand-50: rgb(242 139 136 / 0.12);
+  --color-brand-100: rgb(242 139 136 / 0.2);
+  --color-brand-200: rgb(242 139 136 / 0.34);
+  --color-brand-500: #f28b88;
+  --color-brand-600: #f28b88;
+  --color-brand-700: #f7a9a6;
+  --color-brand-800: #fac6c4;
+  --color-on-brand: #111728; /* text on coral: 7.4:1 */
 
-  --color-positive-600: #059669;
-  --color-positive-50: #ecfdf5;
-  --color-negative-600: #dc2626;
-  --color-negative-50: #fef2f2;
-  --color-warning-600: #d97706;
-  --color-warning-50: #fffbeb;
+  /* Information accent: powder blue */
+  --color-accent-100: rgb(144 191 242 / 0.16);
+  --color-accent-500: #90bff2;
+  --color-accent-600: #90bff2;
+
+  /* Status */
+  --color-positive-50: rgb(131 201 165 / 0.14);
+  --color-positive-600: #83c9a5;
+  --color-negative-50: rgb(238 111 123 / 0.14);
+  --color-negative-600: #f0808b;
+  --color-warning-50: rgb(242 194 123 / 0.14);
+  --color-warning-600: #f2c27b;
+
+  --shadow-card: 0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 8px 24px -12px rgb(0 0 0 / 0.5);
+  --shadow-lift: 0 14px 32px -12px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 10px 24px -8px rgb(242 139 136 / 0.55);
+
+  --animate-rise: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-grow: grow 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-sheet: sheet 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  @keyframes pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes sheet {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+}
+
+/* Light theme (Settings → Appearance). */
+:root[data-theme="light"] {
+  --color-canvas: #f3f5fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f6f8fc;
+  --color-line: #dfe5ef;
+  --color-hero-from: #5f8dba;
+  --color-hero-to: #2c4166;
+  --color-nav: #ffffff;
+
+  --color-ink-50: #f5f7fb;
+  --color-ink-100: #eceff5;
+  --color-ink-200: #dfe5ef;
+  --color-ink-300: #c5cedc;
+  --color-ink-400: #8a97ad;
+  --color-ink-500: #5e6b82;
+  --color-ink-600: #4a5670;
+  --color-ink-700: #364159;
+  --color-ink-800: #222b40;
+  --color-ink-900: #111728;
+
+  --color-brand-50: #fdeeed;
+  --color-brand-100: #fbdcdb;
+  --color-brand-200: #f6c0be;
+  --color-brand-500: #f28b88;
+  --color-brand-600: #f28b88;
+  --color-brand-700: #b8433f;
+  --color-brand-800: #95332f;
+
+  --color-accent-100: #e3effc;
+  --color-accent-500: #5b9be0;
+  --color-accent-600: #2f6fb3;
+
+  --color-positive-50: #e7f5ed;
+  --color-positive-600: #2c845b;
+  --color-negative-50: #fdecee;
+  --color-negative-600: #c8384a;
+  --color-warning-50: #fdf5e6;
+  --color-warning-600: #9a6411;
+
+  --shadow-card: 0 1px 2px rgb(17 23 40 / 0.05), 0 8px 24px -16px rgb(17 23 40 / 0.25);
+  --shadow-lift: 0 14px 32px -14px rgb(17 23 40 / 0.3);
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
   }
   body {
-    @apply bg-ink-50 text-ink-800 font-sans;
+    @apply bg-canvas text-ink-800 font-sans;
   }
   /* Visible keyboard focus everywhere; mouse clicks do not show the ring. */
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-brand-600;
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  ::selection {
+    @apply bg-brand-200;
+  }
+}
+
+@layer components {
+  /* Layered blue gradient used by feature cards (balance, accounts, goals). */
+  .card-hero {
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgb(255 255 255 / 0.14), transparent 55%),
+      linear-gradient(145deg, var(--color-hero-from), var(--color-hero-to));
+    color: #f8f9fc;
+  }
+}
+
+/* Motion is decoration: users who ask for less get none. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

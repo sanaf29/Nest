@@ -1,13 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../ui/Button';
 import { SelectField, TextField } from '../ui/Field';
+import { CATEGORY_SWATCHES } from '../../utils/categoryStyle';
 import { FormError } from '../ui/States';
 import { useFormSubmit } from '../../hooks/useFormSubmit';
 import { categoryService } from '../../services/categoryService';
 import type { CategoryResponse, CategoryType } from '../../types/api';
 import type { FieldErrors } from '../../utils/errors';
 
-const palette = ['#0D9488', '#16A34A', '#2563EB', '#7C3AED', '#DB2777', '#DC2626', '#EA580C', '#D97706', '#0891B2', '#6B7280'];
+const palette = CATEGORY_SWATCHES;
 
 export function CategoryForm({ category, defaultType = 'EXPENSE', onSaved, onCancel }: { category?: CategoryResponse; defaultType?: CategoryType; onSaved: () => void; onCancel: () => void }) {
   const [name, setName] = useState(category?.name ?? '');

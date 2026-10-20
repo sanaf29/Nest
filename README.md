@@ -168,6 +168,14 @@ npm run e2e          # end-to-end tests in Chromium against the running backend
                      #  backend on another port: E2E_API_URL=http://localhost:8081 npm run e2e)
 ```
 
+To try the app with realistic data, seed a demo user with three months of CAD activity (accounts, budget, goals, recurring bills, reminders):
+
+```bash
+NEST_API_URL=http://localhost:8080 npm run seed:demo   # then log in as demo@nest.local / NestDemo2026
+```
+
+The interface is mobile-first: a dark midnight theme by default (light and system themes in Profile → Appearance), a bottom tab bar with a raised + button on phones, and a sidebar on wide screens.
+
 ---
 
 ## API Overview

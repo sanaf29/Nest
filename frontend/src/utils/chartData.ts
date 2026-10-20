@@ -37,7 +37,7 @@ export function toSpendingSlices(spending: CategorySpendingResponse, maxSlices =
   if (tail.length > 0) {
     const otherCents = tail.reduce((total, c) => total + Math.round(c.amount * 100), 0);
     const otherPercent = Math.round(tail.reduce((total, c) => total + c.percentOfTotal, 0) * 100) / 100;
-    slices.push({ name: 'Other', value: otherCents / 100, color: '#94a3b8', percent: otherPercent });
+    slices.push({ name: 'Other', value: otherCents / 100, color: '#A9B6CC', percent: otherPercent });
   }
   return slices;
 }

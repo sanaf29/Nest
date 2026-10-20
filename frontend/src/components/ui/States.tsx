@@ -15,7 +15,7 @@ export function LoadingState({ label = 'Loading…' }: { label?: string }) {
 
 export function ErrorState({ error, onRetry }: { error: ApiError; onRetry?: () => void }) {
   return (
-    <div role="alert" className="flex flex-col items-center gap-3 rounded-xl bg-negative-50 px-6 py-8 text-center">
+    <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl bg-negative-50 px-6 py-8 text-center">
       <Icon name="alert" className="h-6 w-6 text-negative-600" />
       <p className="text-sm text-ink-700">{error.message}</p>
       {onRetry && (
@@ -30,7 +30,7 @@ export function ErrorState({ error, onRetry }: { error: ApiError; onRetry?: () =
 export function EmptyState({ icon = 'list', title, children, action }: { icon?: IconName; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
-      <div className="rounded-full bg-brand-50 p-3 text-brand-700">
+      <div className="animate-pop rounded-2xl bg-brand-50 p-3.5 text-brand-600">
         <Icon name={icon} className="h-6 w-6" />
       </div>
       <h3 className="text-sm font-semibold text-ink-900">{title}</h3>
@@ -44,7 +44,7 @@ export function EmptyState({ icon = 'list', title, children, action }: { icon?: 
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div role="alert" className="flex items-start gap-2 rounded-lg bg-negative-50 px-3 py-2 text-sm text-negative-600">
+    <div role="alert" className="flex items-start gap-2 rounded-xl bg-negative-50 px-3 py-2 text-sm text-negative-600">
       <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
       <span>{message}</span>
     </div>

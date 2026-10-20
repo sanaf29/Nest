@@ -108,7 +108,7 @@ export function SharedExpenseForm({ currency, myName, onSaved, onCancel }: { cur
               </span>
               {i > 0 && people.length > 2 && (
                 <button type="button" onClick={() => { setPeople((ps) => ps.filter((x) => x.key !== p.key)); if (payerKey === p.key) setPayerKey(meKey); }}
-                  className="rounded-lg p-1.5 text-ink-500 hover:bg-white" aria-label={`Remove ${p.name || `person ${i + 1}`}`}>
+                  className="rounded-lg p-1.5 text-ink-500 hover:bg-ink-100" aria-label={`Remove ${p.name || `person ${i + 1}`}`}>
                   <Icon name="trash" className="h-4 w-4" />
                 </button>
               )}

@@ -15,6 +15,7 @@ const page = <T,>(load: () => Promise<T>, name: keyof T) =>
 const DashboardPage = page(() => import('./pages/DashboardPage'), 'DashboardPage');
 const AccountsPage = page(() => import('./pages/AccountsPage'), 'AccountsPage');
 const AccountDetailPage = page(() => import('./pages/AccountDetailPage'), 'AccountDetailPage');
+const AddTransactionPage = page(() => import('./pages/AddTransactionPage'), 'AddTransactionPage');
 const TransactionsPage = page(() => import('./pages/TransactionsPage'), 'TransactionsPage');
 const CalendarPage = page(() => import('./pages/CalendarPage'), 'CalendarPage');
 const BudgetPage = page(() => import('./pages/BudgetPage'), 'BudgetPage');
@@ -46,6 +47,7 @@ export const routes = [
           { path: '/accounts', element: <AccountsPage /> },
           { path: '/accounts/:id', element: <AccountDetailPage /> },
           { path: '/transactions', element: <TransactionsPage /> },
+          { path: '/add', element: <AddTransactionPage /> },
           { path: '/calendar', element: <CalendarPage /> },
           { path: '/budget', element: <BudgetPage /> },
           { path: '/goals', element: <GoalsPage /> },

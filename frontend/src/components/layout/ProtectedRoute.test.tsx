@@ -20,13 +20,13 @@ describe('route protection', () => {
 
   it('lets signed-in users into the app', async () => {
     renderApp('/', { signedIn: true });
-    expect(await screen.findByRole('heading', { name: 'Hi Sanae' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Good (morning|afternoon|evening), Sanae$/ })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
   });
 
   it('keeps signed-in users away from the login page', async () => {
     const router = renderApp('/login', { signedIn: true });
-    await screen.findByRole('heading', { name: 'Hi Sanae' });
+    await screen.findByRole('heading', { name: /^Good (morning|afternoon|evening), Sanae$/ });
     expect(router.state.location.pathname).toBe('/');
   });
 });

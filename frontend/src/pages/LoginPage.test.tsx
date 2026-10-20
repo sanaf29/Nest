@@ -64,6 +64,6 @@ describe('LoginPage', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/'));
     expect(authService.login).toHaveBeenCalledWith({ email: 'sanae@example.com', password: 'Str0ngPass' });
     expect(JSON.parse(localStorage.getItem('nest.session')!).accessToken).toBe('jwt');
-    expect(await screen.findByRole('heading', { name: 'Hi Sanae' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Good (morning|afternoon|evening), Sanae$/ })).toBeInTheDocument();
   });
 });

@@ -20,7 +20,7 @@ export async function register(page: Page, email: string, currency = 'CAD'): Pro
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByLabel('Preferred currency').selectOption(currency);
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('heading', { name: 'Hi Avery' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), Avery$/ })).toBeVisible();
 }
 
 export async function addAccount(page: Page, name: string, type: string, opening: string): Promise<void> {

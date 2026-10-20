@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -27,7 +28,13 @@ function Delta({ current, previous, currency, lowerIsBetter = false }: { current
 export function ReportsPage() {
   const { user } = useAuth();
   const currency = user?.preferredCurrency ?? 'CAD';
-  const [month, setMonth] = useState(currentYearMonth);
+  const [params] = useSearchParams();
+  // Insights links here with ?year=&month= so the report opens on the month being reviewed.
+  const [month, setMonth] = useState(() => {
+    const year = Number(params.get('year'));
+    const m = Number(params.get('month'));
+    return year > 0 && m >= 1 && m <= 12 ? { year, month: m } : currentYearMonth();
+  });
   const report = useAsync(() => reportService.monthly(month.year, month.month, currency), [month.year, month.month, currency]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +77,7 @@ export function ReportsPage() {
         <div className="flex flex-col gap-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {([['Income', r.totals.income, r.previousMonth.income, false], ['Expenses', r.totals.expenses, r.previousMonth.expenses, true], ['Net cash flow', r.totals.net, r.previousMonth.net, false]] as const).map(([label, value, prev, lower]) => (
-              <div key={label} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ink-200/70">
+              <div key={label} className="rounded-3xl bg-surface p-5 shadow-card ring-1 ring-line/40">
                 <p className="text-sm text-ink-500">{label}</p>
                 <p className="mt-1 text-2xl font-semibold"><MoneyText amount={value} currency={currency} signed={label === 'Net cash flow'} /></p>
                 <Delta current={value} previous={prev} currency={currency} lowerIsBetter={lower} />

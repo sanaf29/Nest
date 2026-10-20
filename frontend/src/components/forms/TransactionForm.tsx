@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Button } from '../ui/Button';
 import { SelectField, TextField } from '../ui/Field';
+import { SegmentedControl } from '../ui/SegmentedControl';
 import { FormError } from '../ui/States';
 import { useFormSubmit } from '../../hooks/useFormSubmit';
 import { transactionService } from '../../services/transactionService';
@@ -8,7 +9,6 @@ import type { AccountResponse, CategoryResponse, TransactionResponse } from '../
 import type { FieldErrors } from '../../utils/errors';
 import { todayIso } from '../../utils/dates';
 import { isValidAmount } from '../../utils/money';
-import { cn } from '../../utils/cn';
 
 interface TransactionFormProps {
   accounts: AccountResponse[];
@@ -74,20 +74,15 @@ export function TransactionForm({ accounts, categories, transaction, defaultAcco
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
       <FormError message={formError} />
-      <div role="radiogroup" aria-label="Type" className="grid grid-cols-2 gap-1 rounded-lg bg-ink-100 p-1">
-        {(['EXPENSE', 'INCOME'] as const).map((option) => (
-          <button
-            key={option}
-            type="button"
-            role="radio"
-            aria-checked={type === option}
-            onClick={() => chooseType(option)}
-            className={cn('rounded-md py-1.5 text-sm font-medium', type === option ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-600')}
-          >
-            {option === 'EXPENSE' ? 'Expense' : 'Income'}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        label="Type"
+        value={type}
+        onChange={chooseType}
+        options={[
+          { value: 'EXPENSE', label: 'Expense' },
+          { value: 'INCOME', label: 'Income', activeClassName: 'bg-positive-600 text-on-brand' },
+        ]}
+      />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField label={`Amount (${currency})`} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} error={fieldErrors.amount} placeholder="0.00" />
         <TextField label="Date" type="date" value={date} onChange={(e) => setDate(e.target.value)} error={fieldErrors.transactionDate} />

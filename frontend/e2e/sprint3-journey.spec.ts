@@ -108,5 +108,5 @@ test('recurring bills, splits, notifications, reminders, reports, and settings',
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill('N3wPassw0rd!');
   await page.getByRole('button', { name: 'Log in' }).click();
-  await expect(page.getByRole('heading', { name: 'Hi Avery' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening), Avery$/ })).toBeVisible();
 });

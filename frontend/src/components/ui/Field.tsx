@@ -1,9 +1,9 @@
 import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { cn } from '../../utils/cn';
 
-const controlClass =
-  'block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-ink-900 ring-1 ring-inset ring-ink-200 ' +
-  'placeholder:text-ink-400 focus:ring-2 focus:ring-brand-600 focus:outline-none disabled:bg-ink-50 disabled:text-ink-500';
+export const controlClass =
+  'block w-full rounded-xl border-0 bg-surface-2 px-3.5 py-2.5 text-sm text-ink-900 ring-1 ring-inset ring-line/70 transition-shadow ' +
+  'placeholder:text-ink-400 focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:opacity-60';
 
 interface FieldShellProps {
   id: string;
@@ -18,16 +18,16 @@ interface FieldShellProps {
 function FieldShell({ id, label, error, hint, children, className }: FieldShellProps) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-ink-700">
+      <label htmlFor={id} className="mb-1.5 block text-xs font-semibold tracking-wide text-ink-500">
         {label}
       </label>
       {children}
       {error ? (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-xs text-negative-600">
+        <p id={`${id}-error`} role="alert" className="mt-1.5 text-xs text-negative-600">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-1 text-xs text-ink-500">
+        <p id={`${id}-hint`} className="mt-1.5 text-xs text-ink-500">
           {hint}
         </p>
       ) : null}

@@ -98,9 +98,14 @@ test('a new user can plan and track a month of finances', async ({ page }) => {
   await expect(stat('Income')).toContainText('3,000.00');
   await expect(stat('Expenses')).toContainText('84.37');
   await expect(stat('Net cash flow')).toContainText('2,915.63');
-  await expect(page.getByRole('list', { name: 'Spending by category' })).toContainText('Groceries');
+  await expect(page.getByRole('list', { name: 'Category limits' })).toContainText('Groceries');
   await expect(page.getByRole('progressbar', { name: 'Emergency fund progress' })).toBeVisible();
   await snapshot(page, '06-dashboard');
+
+  // Insights: the monthly review with the category donut.
+  await page.goto('/insights');
+  await expect(page.getByRole('group', { name: 'Savings rate' })).toContainText('97%'); // 2,915.63 of 3,000 kept
+  await expect(page.getByRole('list', { name: 'Spending by category' })).toContainText('Groceries');
 
   // Calendar shows today's activity.
   await page.goto('/calendar');

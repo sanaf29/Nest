@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { accountTypeLabels } from '../components/forms/AccountForm';
 import { TransactionList } from '../components/TransactionList';
-import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { MoneyText } from '../components/ui/MoneyText';
@@ -32,21 +31,21 @@ export function AccountDetailPage() {
       <Link to="/accounts" className="mb-4 inline-block text-sm text-brand-700 hover:underline">
         ← All accounts
       </Link>
-      <div className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-ink-200/70 sm:flex-row sm:items-center sm:justify-between">
+      <div className="card-hero mb-6 flex animate-rise flex-col gap-4 rounded-3xl p-6 shadow-card sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-900">{a.name}</h1>
-          <div className="mt-2 flex gap-2">
-            <Badge>{accountTypeLabels[a.accountType]}</Badge>
-            <Badge tone="brand">{a.currency}</Badge>
-            {!a.active && <Badge tone="warning">Closed</Badge>}
+          <h1 className="text-2xl font-bold">{a.name}</h1>
+          <div className="mt-2 flex gap-2 text-xs font-semibold">
+            <span className="rounded-full bg-white/15 px-2.5 py-0.5">{accountTypeLabels[a.accountType]}</span>
+            <span className="rounded-full bg-white/15 px-2.5 py-0.5">{a.currency}</span>
+            {!a.active && <span className="rounded-full bg-black/25 px-2.5 py-0.5">Closed</span>}
           </div>
         </div>
         <div className="sm:text-right">
-          <p className="text-sm text-ink-500">Current balance</p>
-          <p className="text-3xl font-semibold">
-            <MoneyText amount={a.currentBalance} currency={a.currency} signed={a.currentBalance < 0} />
+          <p className="text-sm text-white/75">Current balance</p>
+          <p className="text-3xl font-extrabold tabular-nums">
+            <MoneyText amount={a.currentBalance} currency={a.currency} />
           </p>
-          <p className="text-xs text-ink-500">
+          <p className="text-xs text-white/70">
             Opening balance <MoneyText amount={a.openingBalance} currency={a.currency} />
           </p>
         </div>
