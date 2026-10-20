@@ -12,6 +12,7 @@ import com.nest.service.InsightService;
 import com.nest.service.LedgerAnalytics;
 import com.nest.service.insight.FinancialSummary;
 import com.nest.service.insight.InsightEngine;
+import com.nest.service.insight.RecurringChangeSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +20,6 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
-import java.util.List;
 
 /** Gathers the data the rules need into a {@link FinancialSummary}, then runs the engine. */
 @Service
@@ -32,16 +32,18 @@ public class InsightServiceImpl implements InsightService {
     private final MonthlyBudgetRepository budgetRepository;
     private final SavingsGoalRepository goalRepository;
     private final UserRepository userRepository;
+    private final RecurringChangeSource recurringChanges;
     private final InsightEngine engine;
     private final Clock clock;
 
     public InsightServiceImpl(LedgerAnalytics ledgerAnalytics, MonthlyBudgetRepository budgetRepository,
                               SavingsGoalRepository goalRepository, UserRepository userRepository,
-                              InsightEngine engine, Clock clock) {
+                              RecurringChangeSource recurringChanges, InsightEngine engine, Clock clock) {
         this.ledgerAnalytics = ledgerAnalytics;
         this.budgetRepository = budgetRepository;
         this.goalRepository = goalRepository;
         this.userRepository = userRepository;
+        this.recurringChanges = recurringChanges;
         this.engine = engine;
         this.clock = clock;
     }
@@ -79,7 +81,7 @@ public class InsightServiceImpl implements InsightService {
                 goalRepository.findByUserIdOrderByStatusDescTargetDateAscNameAsc(userId).stream()
                         .map(InsightServiceImpl::snapshot)
                         .toList(),
-                List.of());
+                recurringChanges.recentChanges(userId, currency));
     }
 
     private static FinancialSummary.GoalSnapshot snapshot(SavingsGoal goal) {

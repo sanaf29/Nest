@@ -93,4 +93,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     List<MonthlyTypeTotal> sumByMonthAndType(@Param("userId") Long userId, @Param("currency") String currency,
                                              @Param("from") LocalDate from, @Param("to") LocalDate to,
                                              @Param("types") Collection<TransactionType> types);
+
+    /** Generated occurrences of a user's recurring expenses since a date, newest first per rule. */
+    @EntityGraph(attributePaths = {"recurringTransaction", "account"})
+    @Query("""
+            select t from Transaction t
+            where t.recurringTransaction is not null
+              and t.account.user.id = :userId
+              and t.account.currency = :currency
+              and t.type = com.nest.model.TransactionType.EXPENSE
+              and t.occurrenceDate >= :since
+            order by t.recurringTransaction.id, t.occurrenceDate desc
+            """)
+    List<Transaction> findRecurringExpenseOccurrences(@Param("userId") Long userId, @Param("currency") String currency,
+                                                      @Param("since") LocalDate since);
 }

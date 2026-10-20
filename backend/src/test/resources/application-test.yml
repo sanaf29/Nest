@@ -8,3 +8,6 @@ nest:
       secret: bmVzdC10ZXN0LW9ubHktc2VjcmV0LWtleS0zMi1ieXRlcw==
       issuer: nest
       access-token-ttl: 15m
+  # Tests call schedulers' services directly with fixed dates instead of waiting for cron.
+  scheduling:
+    enabled: false

@@ -33,6 +33,11 @@ nest:
       access-token-ttl: 60m
   cors:
     allowed-origins: ${NEST_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  scheduling:
+    enabled: true
+  recurring:
+    # Hourly at :15 (UTC). Generation is idempotent, so the frequency only affects latency.
+    cron: "0 15 * * * *"
 
 springdoc:
   swagger-ui:
