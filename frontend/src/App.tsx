@@ -1,18 +1,32 @@
+import { lazy } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { AppLayout } from './components/layout/AppLayout';
 import { GuestRoute, ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AuthProvider } from './context/AuthProvider';
-import { AccountDetailPage } from './pages/AccountDetailPage';
-import { AccountsPage } from './pages/AccountsPage';
-import { BudgetPage } from './pages/BudgetPage';
-import { CalendarPage } from './pages/CalendarPage';
-import { CategoriesPage } from './pages/CategoriesPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { GoalsPage } from './pages/GoalsPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { TransactionsPage } from './pages/TransactionsPage';
+
+// Each page below is its own chunk (Recharts and large forms load only when needed).
+// Login and registration stay in the main bundle so the first screen paints immediately.
+const page = <T,>(load: () => Promise<T>, name: keyof T) =>
+  lazy(() => load().then((m) => ({ default: m[name] as unknown as React.ComponentType })));
+
+const DashboardPage = page(() => import('./pages/DashboardPage'), 'DashboardPage');
+const AccountsPage = page(() => import('./pages/AccountsPage'), 'AccountsPage');
+const AccountDetailPage = page(() => import('./pages/AccountDetailPage'), 'AccountDetailPage');
+const TransactionsPage = page(() => import('./pages/TransactionsPage'), 'TransactionsPage');
+const CalendarPage = page(() => import('./pages/CalendarPage'), 'CalendarPage');
+const BudgetPage = page(() => import('./pages/BudgetPage'), 'BudgetPage');
+const GoalsPage = page(() => import('./pages/GoalsPage'), 'GoalsPage');
+const CategoriesPage = page(() => import('./pages/CategoriesPage'), 'CategoriesPage');
+const RecurringPage = page(() => import('./pages/RecurringPage'), 'RecurringPage');
+const InsightsPage = page(() => import('./pages/InsightsPage'), 'InsightsPage');
+const RemindersPage = page(() => import('./pages/RemindersPage'), 'RemindersPage');
+const NotificationsPage = page(() => import('./pages/NotificationsPage'), 'NotificationsPage');
+const SharedExpensesPage = page(() => import('./pages/SharedExpensesPage'), 'SharedExpensesPage');
+const ReportsPage = page(() => import('./pages/ReportsPage'), 'ReportsPage');
+const SettingsPage = page(() => import('./pages/SettingsPage'), 'SettingsPage');
 
 export const routes = [
   {
@@ -36,6 +50,13 @@ export const routes = [
           { path: '/budget', element: <BudgetPage /> },
           { path: '/goals', element: <GoalsPage /> },
           { path: '/categories', element: <CategoriesPage /> },
+          { path: '/recurring', element: <RecurringPage /> },
+          { path: '/insights', element: <InsightsPage /> },
+          { path: '/reminders', element: <RemindersPage /> },
+          { path: '/notifications', element: <NotificationsPage /> },
+          { path: '/shared', element: <SharedExpensesPage /> },
+          { path: '/reports', element: <ReportsPage /> },
+          { path: '/settings', element: <SettingsPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

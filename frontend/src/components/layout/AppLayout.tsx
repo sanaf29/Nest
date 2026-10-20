@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../../hooks/useAuth';
 import { Icon } from '../ui/Icon';
+import { LoadingState } from '../ui/States';
+import { NotificationBell } from './NotificationBell';
 import { cn } from '../../utils/cn';
 import { navigation } from './navigation';
 
@@ -57,9 +59,14 @@ function UserBox() {
         </p>
         <p className="truncate text-xs text-ink-500">{user.email}</p>
       </div>
-      <button type="button" onClick={logout} className="rounded-lg p-2 text-ink-500 hover:bg-white hover:text-ink-900" aria-label="Log out" title="Log out">
-        <Icon name="logout" className="h-4 w-4" />
-      </button>
+      <div className="flex shrink-0">
+        <NavLink to="/settings" className="rounded-lg p-2 text-ink-500 hover:bg-white hover:text-ink-900" aria-label="Settings" title="Settings">
+          <Icon name="settings" className="h-4 w-4" />
+        </NavLink>
+        <button type="button" onClick={logout} className="rounded-lg p-2 text-ink-500 hover:bg-white hover:text-ink-900" aria-label="Log out" title="Log out">
+          <Icon name="logout" className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -77,10 +84,11 @@ export function AppLayout() {
         Skip to content
       </a>
 
-      <aside className="no-print hidden w-64 shrink-0 flex-col justify-between border-r border-ink-200 bg-white px-4 py-6 lg:flex lg:sticky lg:top-0 lg:h-dvh">
+      <aside className="no-print hidden w-64 shrink-0 flex-col justify-between overflow-y-auto border-r border-ink-200 bg-white px-4 py-6 lg:flex lg:sticky lg:top-0 lg:h-dvh">
         <div className="flex flex-col gap-8">
-          <div className="px-2">
+          <div className="flex items-center justify-between px-2">
             <Logo />
+            <NotificationBell />
           </div>
           <NavLinks />
         </div>
@@ -89,9 +97,12 @@ export function AppLayout() {
 
       <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-ink-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
         <Logo />
-        <button type="button" onClick={() => setMenuOpen(true)} className="rounded-lg p-2 text-ink-600 hover:bg-ink-100" aria-label="Open menu" aria-expanded={menuOpen}>
-          <Icon name="menu" />
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button type="button" onClick={() => setMenuOpen(true)} className="rounded-lg p-2 text-ink-600 hover:bg-ink-100" aria-label="Open menu" aria-expanded={menuOpen}>
+            <Icon name="menu" />
+          </button>
+        </div>
       </header>
 
       {menuOpen && (
@@ -113,7 +124,9 @@ export function AppLayout() {
       )}
 
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
-        <Outlet />
+        <Suspense fallback={<LoadingState />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

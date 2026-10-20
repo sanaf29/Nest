@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { SpendingDonut } from '../components/charts/SpendingDonut';
+import { InsightList } from '../components/InsightList';
 import { TrendsChart } from '../components/charts/TrendsChart';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
@@ -12,6 +13,7 @@ import { EmptyState, ErrorState, LoadingState } from '../components/ui/States';
 import { useAsync } from '../hooks/useAsync';
 import { useAuth } from '../hooks/useAuth';
 import { dashboardService } from '../services/dashboardService';
+import { insightService } from '../services/insightService';
 import { toSpendingSlices, toTrendRows } from '../utils/chartData';
 import { currentYearMonth, formatDate, monthLabel } from '../utils/dates';
 
@@ -33,6 +35,7 @@ export function DashboardPage() {
   const summary = useAsync(() => dashboardService.summary(month.year, month.month), [month.year, month.month]);
   const spending = useAsync(() => dashboardService.spendingByCategory(month.year, month.month, currency), [month.year, month.month, currency]);
   const trends = useAsync(() => dashboardService.monthlyTrends(month.year, month.month, 6, currency), [month.year, month.month, currency]);
+  const insights = useAsync(() => insightService.forMonth(month.year, month.month, currency), [month.year, month.month, currency]);
 
   const s = summary.data;
   const flow = s?.cashFlow.find((c) => c.currency === currency);
@@ -73,6 +76,12 @@ export function DashboardPage() {
               <MoneyText amount={flow?.net ?? 0} currency={currency} signed />
             </StatCard>
           </div>
+
+          {insights.data && insights.data.insights.length > 0 && (
+            <Card title="Insights" action={<Link to="/insights" className="text-sm font-medium text-brand-700 hover:underline">See all</Link>}>
+              <InsightList insights={insights.data.insights} limit={2} />
+            </Card>
+          )}
 
           {otherBalances.length > 0 && (
             <p className="text-sm text-ink-500">

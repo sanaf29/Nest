@@ -26,7 +26,17 @@ export const navigation: NavSection[] = [
     items: [
       { to: '/budget', label: 'Budget', icon: 'pie' },
       { to: '/goals', label: 'Savings goals', icon: 'target' },
+      { to: '/recurring', label: 'Recurring', icon: 'repeat' },
       { to: '/categories', label: 'Categories', icon: 'tag' },
+    ],
+  },
+  {
+    label: 'Tools',
+    items: [
+      { to: '/insights', label: 'Insights', icon: 'bulb' },
+      { to: '/reminders', label: 'Reminders', icon: 'bell' },
+      { to: '/shared', label: 'Split expenses', icon: 'users' },
+      { to: '/reports', label: 'Reports', icon: 'file' },
     ],
   },
 ];

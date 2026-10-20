@@ -322,3 +322,169 @@ export interface MonthlyTrendsResponse {
   currency: string;
   months: { year: number; month: number; income: number; expenses: number; net: number }[];
 }
+
+// ---- Insights --------------------------------------------------------------------------------
+export type InsightSeverity = 'ALERT' | 'WARNING' | 'INFO' | 'POSITIVE';
+
+export interface InsightsResponse {
+  year: number;
+  month: number;
+  currency: string;
+  asOf: ISODate;
+  disclaimer: string;
+  insights: { code: string; severity: InsightSeverity; title: string; message: string }[];
+}
+
+// ---- Recurring transactions ------------------------------------------------------------------
+export type Frequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+export type RecurringStatus = 'ACTIVE' | 'PAUSED' | 'ENDED';
+
+export interface RecurringRequest {
+  accountId: number;
+  categoryId: number;
+  type: 'INCOME' | 'EXPENSE';
+  amount: number;
+  description: string;
+  frequency: Frequency;
+  startDate: ISODate;
+  endDate?: ISODate | null;
+  remindDaysBefore?: number | null;
+}
+
+export type UpdateRecurringRequest = Omit<RecurringRequest, 'type' | 'frequency' | 'startDate'>;
+
+export interface RecurringResponse {
+  id: number;
+  accountId: number;
+  accountName: string;
+  categoryId: number;
+  categoryName: string;
+  type: 'INCOME' | 'EXPENSE';
+  amount: number;
+  currency: string;
+  description: string;
+  frequency: Frequency;
+  startDate: ISODate;
+  endDate: ISODate | null;
+  nextOccurrence: ISODate | null;
+  upcoming: ISODate[];
+  status: RecurringStatus;
+  pauseReason: string | null;
+  remindDaysBefore: number | null;
+  createdAt: ISOInstant;
+}
+
+// ---- Reminders & notifications ---------------------------------------------------------------
+export type ReminderType = 'BILL_PAYMENT' | 'BUDGET_THRESHOLD' | 'SUBSCRIPTION_RENEWAL' | 'SAVINGS_GOAL_DEADLINE' | 'PARKING' | 'CUSTOM';
+export type ReminderStatus = 'SCHEDULED' | 'SENT' | 'DISMISSED';
+
+export interface ReminderRequest {
+  type: ReminderType;
+  title: string;
+  notes?: string;
+  dueAt?: ISOInstant | null;
+  offsetMinutes?: number;
+  location?: string;
+  savingsGoalId?: number | null;
+  categoryId?: number | null;
+  thresholdPercent?: number | null;
+}
+
+export interface ReminderResponse {
+  id: number;
+  type: ReminderType;
+  title: string;
+  notes: string | null;
+  dueAt: ISOInstant | null;
+  offsetMinutes: number;
+  remindAt: ISOInstant | null;
+  status: ReminderStatus;
+  sentAt: ISOInstant | null;
+  location: string | null;
+  savingsGoalId: number | null;
+  savingsGoalName: string | null;
+  categoryId: number | null;
+  categoryName: string | null;
+  thresholdPercent: number | null;
+  createdAt: ISOInstant;
+}
+
+export type NotificationCategory = 'REMINDER' | 'BUDGET' | 'RECURRING' | 'GOAL' | 'SYSTEM';
+
+export interface NotificationResponse {
+  id: number;
+  category: NotificationCategory;
+  title: string;
+  message: string;
+  link: string | null;
+  read: boolean;
+  createdAt: ISOInstant;
+}
+
+// ---- Shared expenses -------------------------------------------------------------------------
+export type SplitMethod = 'EQUAL' | 'CUSTOM' | 'PERCENTAGE';
+
+export interface SharedExpenseRequest {
+  description: string;
+  totalAmount: number;
+  currency?: string;
+  expenseDate: ISODate;
+  splitMethod: SplitMethod;
+  participants: { name: string; email?: string; me: boolean; paid: boolean; value?: number }[];
+}
+
+export interface SharedExpenseResponse {
+  id: number;
+  description: string;
+  totalAmount: number;
+  currency: string;
+  expenseDate: ISODate;
+  splitMethod: SplitMethod;
+  settled: boolean;
+  owedToYou: number;
+  youOwe: number;
+  participants: {
+    id: number;
+    name: string;
+    email: string | null;
+    me: boolean;
+    paid: boolean;
+    share: number;
+    owes: boolean;
+    settled: boolean;
+    settledAt: ISOInstant | null;
+  }[];
+  createdAt: ISOInstant;
+}
+
+export interface SharedBalanceResponse {
+  person: string;
+  currency: string;
+  amount: number;
+}
+
+// ---- Reports ---------------------------------------------------------------------------------
+export interface MonthlyReportResponse {
+  year: number;
+  month: number;
+  currency: string;
+  totals: { income: number; expenses: number; net: number };
+  previousMonth: { income: number; expenses: number; net: number };
+  expensesByCategory: { category: string; color: string; amount: number; percentOfTotal: number }[];
+  incomeByCategory: { category: string; color: string; amount: number; percentOfTotal: number }[];
+  budget: {
+    plannedIncome: number;
+    savingsTarget: number;
+    spendable: number;
+    spent: number;
+    remaining: number;
+    categories: { category: string; limit: number; spent: number; percentUsed: number; status: BudgetStatus }[];
+  } | null;
+  goals: { name: string; currency: string; saved: number; target: number; progressPercent: number; status: GoalStatus }[];
+  topExpenses: { date: ISODate; description: string | null; category: string | null; account: string; amount: number }[];
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}

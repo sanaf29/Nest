@@ -15,7 +15,7 @@ Nest is built as a layered, object-oriented Spring Boot API backed by SQL Server
 | 0 | Planning and system design | Done |
 | 1 | Backend foundation: auth, accounts, categories, transactions, transfers | Done |
 | 2 | Budgets, savings goals, dashboard, React frontend | Done |
-| 3 | Insights, recurring transactions, reminders, expense splitting, reports | Planned |
+| 3 | Insights, recurring transactions, reminders, expense splitting, reports | Done |
 
 The release plan is in [`docs/sprint0/RPM.md`](docs/sprint0/RPM.md); sprint documents are in [`docs/`](docs/).
 
@@ -32,6 +32,12 @@ The release plan is in [`docs/sprint0/RPM.md`](docs/sprint0/RPM.md); sprint docu
 - **Savings goals:** targets with deadlines, contributions (safe to retry), automatic "achieved" status.
 - **Dashboard:** balances and cash flow per currency, spending by category, 6-month trends, budget and goal progress.
 - **Web app:** responsive React UI for everything above, including a monthly transaction calendar.
+- **Insights:** explainable, rule-based observations (over budget, spending trend, goal behind schedule, price increases). Not financial advice.
+- **Recurring transactions:** rent, pay, and subscriptions recorded automatically on schedule, exactly once, with month-end and leap-day handling.
+- **Reminders and notifications:** bills, renewals, parking (location + expiry), goal deadlines, and budget alerts in an in-app notification centre.
+- **Split expenses:** equal, by amount, or by percentage, with exact cents, who-owes-whom balances, and settlements (tracking only).
+- **Reports and export:** monthly report with comparisons, printable view, and CSV exports protected against spreadsheet formula injection.
+- **Security:** password change, login throttling, strict security headers.
 - **Privacy by design:** every query is scoped to the authenticated user. Another user's data is indistinguishable from data that doesn't exist (404).
 
 ---
@@ -119,6 +125,8 @@ cd backend
 ./mvnw spring-boot:run        # Flyway creates or updates the schema on startup
 ```
 
+Background jobs (recurring transactions hourly, reminders every minute) start with the backend; set `nest.scheduling.enabled=false` to turn them off.
+
 - API: http://localhost:8080
 - Swagger UI: http://localhost:8080/swagger-ui.html (log in, then click **Authorize** and paste the `accessToken`)
 
@@ -177,6 +185,13 @@ All endpoints except register and login require `Authorization: Bearer <token>`.
 | Budgets | `POST/GET /api/budgets`, `GET /api/budgets/{year}/{month}[?currency]`, `PUT/DELETE /api/budgets/{id}`, `GET /api/budgets/{id}/summary` |
 | Savings goals | `POST/GET /api/savings-goals[?status]`, `GET/PUT/DELETE /api/savings-goals/{id}`, `POST /api/savings-goals/{id}/contributions`, `DELETE /api/savings-goals/{id}/contributions/{contributionId}` |
 | Dashboard | `GET /api/dashboard/summary`, `GET /api/dashboard/spending-by-category`, `GET /api/dashboard/monthly-trends` |
+| Insights | `GET /api/insights[?year&month&currency]` |
+| Recurring | `POST/GET /api/recurring-transactions`, `GET/PUT/DELETE /api/recurring-transactions/{id}`, `POST …/{id}/pause`, `POST …/{id}/resume`, `POST /api/recurring-transactions/run` |
+| Reminders | `POST/GET /api/reminders`, `GET/PUT/DELETE /api/reminders/{id}`, `POST /api/reminders/{id}/dismiss` |
+| Notifications | `GET /api/notifications[?unreadOnly]`, `GET /api/notifications/unread-count`, `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all` |
+| Shared expenses | `POST/GET /api/shared-expenses`, `GET /api/shared-expenses/balances`, `GET/DELETE /api/shared-expenses/{id}`, `POST …/{id}/participants/{participantId}/settle` and `/unsettle` |
+| Reports | `GET /api/reports/monthly`, `GET /api/reports/monthly.csv`, `GET /api/reports/transactions.csv` |
+| Profile | `PUT /api/users/me/password` |
 
 ---
 
