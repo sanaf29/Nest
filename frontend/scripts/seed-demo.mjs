@@ -59,6 +59,14 @@ async function main() {
   const visa = await account('Visa Infinite', 'CREDIT_CARD', -215.4);
 
   const categories = await call('GET', '/categories');
+  // A couple of personal categories alongside the defaults.
+  for (const [name, categoryType, color] of [['Pets', 'EXPENSE', '#B9A3F0'], ['Gym & Fitness', 'EXPENSE', '#7FD1D8'], ['Side Hustle', 'INCOME', '#C9D97E']]) {
+    try {
+      categories.push(await call('POST', '/categories', { name, categoryType, color }));
+    } catch (error) {
+      if (error.status !== 409) throw error;
+    }
+  }
   const cat = (name) => {
     const found = categories.find((c) => c.name === name);
     if (!found) throw new Error(`Missing default category ${name}`);
@@ -93,6 +101,9 @@ async function main() {
     await tx(day(18), cash, 'Healthcare', 'EXPENSE', between(15, 42), 'Pharmacy');
     if (offset !== -2) await tx(day(22), visa, 'Education', 'EXPENSE', 49, 'Online course');
     await tx(day(25), cash, 'Personal Care', 'EXPENSE', 35, 'Haircut');
+    await tx(day(8), visa, 'Pets', 'EXPENSE', between(38, 75), 'Dog food & treats');
+    await tx(day(11), chequing, 'Gym & Fitness', 'EXPENSE', 54.99, 'Gym membership');
+    if (offset !== -2) await tx(day(13), chequing, 'Side Hustle', 'INCOME', between(120, 260), 'Etsy shop sales');
   }
 
   // Move money to savings and pay the card.
@@ -132,6 +143,25 @@ async function main() {
   await goal('New Laptop', 1800, `${today.getFullYear()}-12-15`, [[45, 600, null], [10, 350, null]]);
   await goal('Vacation in Portugal', 3500, `${nextYear}-08-01`, [[60, 800, null], [25, 350, null]]);
   await goal('Tuition', 6000, `${nextYear}-09-01`, [[70, 1500, null], [30, 600, null]]);
+  await goal('Concert Tickets', 250, null, [[40, 150, null], [12, 100, 'Done!']]); // achieved → notification
+
+  // Shared costs with friends.
+  const split = (body) => call('POST', '/shared-expenses', { splitMethod: 'EQUAL', ...body });
+  const cottage = await split({
+    description: 'Cottage weekend', totalAmount: 360, expenseDate: iso(daysAgo(9)),
+    participants: [{ name: 'Maya', me: true, paid: true }, { name: 'Alex', paid: false }, { name: 'Sam', paid: false }],
+  });
+  await split({
+    description: 'Groceries for the BBQ', totalAmount: 84.6, expenseDate: iso(daysAgo(4)),
+    participants: [{ name: 'Maya', me: true, paid: false }, { name: 'Jordan', paid: true }],
+  });
+  await split({
+    description: 'Birthday dinner for Priya', totalAmount: 186, expenseDate: iso(daysAgo(15)), splitMethod: 'CUSTOM',
+    participants: [{ name: 'Maya', me: true, paid: true, value: 62 }, { name: 'Alex', paid: false, value: 62 }, { name: 'Jordan', paid: false, value: 62 }],
+  });
+  // Alex already paid back for the cottage.
+  const alex = cottage.participants.find((p) => p.name === 'Alex');
+  if (alex) await call('POST', `/shared-expenses/${cottage.id}/participants/${alex.id}/settle`);
 
   // Upcoming plans: the next paydays, rent, and subscriptions (all start in the future, so nothing is duplicated).
   const next = (d) => {
@@ -148,8 +178,16 @@ async function main() {
   const inDays = (n, hour) => new Date(today.getFullYear(), today.getMonth(), today.getDate() + n, hour).toISOString();
   await call('POST', '/reminders', { type: 'BILL_PAYMENT', title: 'Pay the Visa bill', dueAt: inDays(4, 9), offsetMinutes: 60 });
   await call('POST', '/reminders', { type: 'SUBSCRIPTION_RENEWAL', title: 'Gym membership renews', dueAt: inDays(9, 10), offsetMinutes: 1440 });
+  await call('POST', '/reminders', { type: 'CUSTOM', title: 'Renew car insurance', notes: 'Compare quotes first', dueAt: inDays(18, 9), offsetMinutes: 1440 });
+  // Due in two minutes, so the reminder job sends a notification shortly after seeding.
+  await call('POST', '/reminders', { type: 'PARKING', title: 'Parking expires', location: 'Level 2, spot B14', dueAt: new Date(Date.now() + 2 * 60_000).toISOString(), offsetMinutes: 0 });
+  try {
+    await call('POST', '/reminders', { type: 'BUDGET_THRESHOLD', title: 'Dining out is getting high', categoryId: cat('Dining Out'), thresholdPercent: 80 });
+  } catch (error) {
+    console.log(`(budget alert skipped: ${error.message})`);
+  }
 
-  console.log(`Seeded ${count} transactions, ${transfers} transfers, a budget, 4 goals, 4 recurring rules, and 2 reminders.`);
+  console.log(`Seeded ${count} transactions, ${transfers} transfers, a budget, 5 goals, 3 shared expenses, 4 recurring rules, and 5 reminders.`);
   console.log(`Log in as ${EMAIL} / ${PASSWORD}`);
 }
 
