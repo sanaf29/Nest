@@ -27,6 +27,10 @@ public final class TransactionSpecifications {
         return accountId == null ? null : (root, query, cb) -> cb.equal(root.get("account").get("id"), accountId);
     }
 
+    public static Specification<Transaction> inCurrency(String currency) {
+        return currency == null ? null : (root, query, cb) -> cb.equal(root.get("account").get("currency"), currency);
+    }
+
     public static Specification<Transaction> inCategory(Long categoryId) {
         return categoryId == null ? null : (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
     }
