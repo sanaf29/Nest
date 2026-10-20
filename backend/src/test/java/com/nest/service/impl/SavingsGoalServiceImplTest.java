@@ -47,7 +47,7 @@ class SavingsGoalServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new SavingsGoalServiceImpl(goalRepository, userRepository, new SavingsGoalMapper(), CLOCK);
+        service = new SavingsGoalServiceImpl(goalRepository, userRepository, new SavingsGoalMapper(), CLOCK, event -> { });
         owner = new User("Sanae", "Faghfouri", "sanae@example.com", "$2a$hash", "EUR");
         ReflectionTestUtils.setField(owner, "id", USER_ID);
     }

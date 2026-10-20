@@ -101,6 +101,10 @@ public class FinancialAccount extends AuditableEntity {
         return user.getId() != null && user.getId() == userId;
     }
 
+    public User getUser() {
+        return user;
+    }
+
     /** Owner's id. Reading the id of a lazy proxy does not load the user. */
     public Long ownerId() {
         return user.getId();

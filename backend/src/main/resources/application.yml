@@ -38,6 +38,9 @@ nest:
   recurring:
     # Hourly at :15 (UTC). Generation is idempotent, so the frequency only affects latency.
     cron: "0 15 * * * *"
+  reminders:
+    # Every minute (UTC). Notifications are deduplicated, so overlapping runs are harmless.
+    cron: "0 * * * * *"
 
 springdoc:
   swagger-ui:

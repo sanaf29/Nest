@@ -12,7 +12,9 @@ import com.nest.model.SavingsGoal;
 import com.nest.model.User;
 import com.nest.repository.SavingsGoalRepository;
 import com.nest.repository.UserRepository;
+import com.nest.service.GoalAchievedEvent;
 import com.nest.service.SavingsGoalService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +29,15 @@ public class SavingsGoalServiceImpl implements SavingsGoalService {
     private final UserRepository userRepository;
     private final SavingsGoalMapper goalMapper;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
 
     public SavingsGoalServiceImpl(SavingsGoalRepository goalRepository, UserRepository userRepository,
-                                  SavingsGoalMapper goalMapper, Clock clock) {
+                                  SavingsGoalMapper goalMapper, Clock clock, ApplicationEventPublisher events) {
         this.goalRepository = goalRepository;
         this.userRepository = userRepository;
         this.goalMapper = goalMapper;
         this.clock = clock;
+        this.events = events;
     }
 
     @Override
@@ -86,7 +90,11 @@ public class SavingsGoalServiceImpl implements SavingsGoalService {
         }
         LocalDate today = LocalDate.now(clock);
         LocalDate date = request.contributionDate() != null ? request.contributionDate() : today;
+        boolean wasActive = goal.getStatus() == GoalStatus.ACTIVE;
         goal.contribute(request.amount(), date, request.note(), request.idempotencyKey(), today, clock.instant());
+        if (wasActive && goal.getStatus() == GoalStatus.ACHIEVED) {
+            events.publishEvent(new GoalAchievedEvent(userId, goal.getId(), goal.getName(), goal.target().toString()));
+        }
         // A concurrent replay of the same key that passes the check above is stopped by the
         // UX_goal_contributions_idempotency index and reported as 409.
         return new ContributionResult(goalMapper.toResponse(goalRepository.saveAndFlush(goal)), true);
