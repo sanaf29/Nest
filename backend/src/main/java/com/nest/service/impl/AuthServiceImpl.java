@@ -10,6 +10,7 @@ import com.nest.mapper.UserMapper;
 import com.nest.model.User;
 import com.nest.repository.UserRepository;
 import com.nest.security.AccessToken;
+import com.nest.security.LoginAttemptLimiter;
 import com.nest.security.TokenService;
 import com.nest.service.AuthService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final UserMapper userMapper;
+    private final LoginAttemptLimiter loginLimiter;
 
     /**
      * A real hash checked when the email is unknown, so "no such user" takes about as long as
@@ -35,11 +37,13 @@ public class AuthServiceImpl implements AuthService {
     public AuthServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            TokenService tokenService,
-                           UserMapper userMapper) {
+                           UserMapper userMapper,
+                           LoginAttemptLimiter loginLimiter) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.userMapper = userMapper;
+        this.loginLimiter = loginLimiter;
         this.timingEqualizerHash = passwordEncoder.encode("nest-timing-equalizer");
     }
 
@@ -64,15 +68,20 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        Optional<User> candidate = userRepository.findByEmail(User.normalizeEmail(request.email()));
+        String email = User.normalizeEmail(request.email());
+        loginLimiter.checkAllowed(email);
+        Optional<User> candidate = userRepository.findByEmail(email);
         if (candidate.isEmpty()) {
             passwordEncoder.matches(request.password(), timingEqualizerHash);
+            loginLimiter.recordFailure(email);
             throw new InvalidCredentialsException();
         }
         User user = candidate.get();
         if (!user.passwordMatches(request.password(), passwordEncoder)) {
+            loginLimiter.recordFailure(email);
             throw new InvalidCredentialsException();
         }
+        loginLimiter.recordSuccess(email);
         AccessToken token = tokenService.issue(user);
         return AuthResponse.bearer(token.value(), token.expiresAt(), userMapper.toResponse(user));
     }

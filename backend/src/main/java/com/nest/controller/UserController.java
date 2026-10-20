@@ -1,6 +1,8 @@
 package com.nest.controller;
 
+import com.nest.dto.request.ChangePasswordRequest;
 import com.nest.dto.request.UpdateProfileRequest;
+import org.springframework.http.ResponseEntity;
 import com.nest.dto.response.UserResponse;
 import com.nest.security.CurrentUserProvider;
 import com.nest.service.UserService;
@@ -40,5 +42,12 @@ public class UserController {
     @Operation(summary = "Update the current user's name and preferred currency")
     public UserResponse updateMe(@Valid @RequestBody UpdateProfileRequest request) {
         return userService.updateProfile(currentUser.currentUserId(), request);
+    }
+
+    @PutMapping("/me/password")
+    @Operation(summary = "Change my password", description = "204; 401 if the current password is wrong; 422 if unchanged.")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(currentUser.currentUserId(), request);
+        return ResponseEntity.noContent().build();
     }
 }

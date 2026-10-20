@@ -12,6 +12,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -54,7 +58,15 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler));
+                        .accessDeniedHandler(accessDeniedHandler))
+                // Defaults already send nosniff, X-Frame-Options: DENY, and no-cache for authenticated responses.
+                // API responses are data, never pages, so they get the strictest CSP; Swagger UI is left alone.
+                .headers(headers -> headers
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                PathPatternRequestMatcher.withDefaults().matcher("/api/**"),
+                                new StaticHeadersWriter("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")))
+                        .addHeaderWriter(new StaticHeadersWriter("Permissions-Policy", "camera=(), microphone=(), geolocation=()")));
         return http.build();
     }
 

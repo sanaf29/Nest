@@ -60,6 +60,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(ProblemDetails.of(HttpStatus.UNAUTHORIZED, "Authentication failed", ex.getMessage()));
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    ResponseEntity<ProblemDetail> handleTooManyRequests(TooManyRequestsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(Math.max(1, ex.retryAfter().getSeconds())))
+                .body(ProblemDetails.of(HttpStatus.TOO_MANY_REQUESTS, "Too many requests", ex.getMessage()));
+    }
+
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     ProblemDetail handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
         return ProblemDetails.of(HttpStatus.CONFLICT, "Concurrent modification",

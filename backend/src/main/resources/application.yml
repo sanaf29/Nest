@@ -31,6 +31,9 @@ nest:
       secret: ${NEST_JWT_SECRET:}
       issuer: nest
       access-token-ttl: 60m
+    login-throttle:
+      max-failures: 5
+      window: 15m
   cors:
     allowed-origins: ${NEST_CORS_ALLOWED_ORIGINS:http://localhost:5173}
   scheduling:

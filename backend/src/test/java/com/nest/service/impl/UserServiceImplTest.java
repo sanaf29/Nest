@@ -33,7 +33,7 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, new UserMapper());
+        userService = new UserServiceImpl(userRepository, new UserMapper(), new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4));
         user = new User("Sanae", "Faghfouri", "sanae@example.com", "$2a$hash", "CAD");
     }
 

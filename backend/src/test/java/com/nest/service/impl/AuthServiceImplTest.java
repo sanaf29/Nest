@@ -10,6 +10,7 @@ import com.nest.mapper.UserMapper;
 import com.nest.model.User;
 import com.nest.repository.UserRepository;
 import com.nest.security.AccessToken;
+import com.nest.security.LoginAttemptLimiter;
 import com.nest.security.TokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -49,7 +50,8 @@ class AuthServiceImplTest {
     @BeforeEach
     void setUp() {
         when(passwordEncoder.encode("nest-timing-equalizer")).thenReturn(DUMMY_HASH);
-        authService = new AuthServiceImpl(userRepository, passwordEncoder, tokenService, new UserMapper());
+        authService = new AuthServiceImpl(userRepository, passwordEncoder, tokenService, new UserMapper(),
+                new LoginAttemptLimiter(new LoginAttemptLimiter.Settings(5, java.time.Duration.ofMinutes(15)), java.time.Clock.systemUTC()));
     }
 
     @Nested
