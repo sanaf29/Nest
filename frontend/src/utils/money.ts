@@ -44,4 +44,20 @@ export function isValidAmount(text: string, currency: string, { allowNegative = 
   return new RegExp(`^${allowNegative ? '-?' : ''}\\d+${decimals}$`).test(text.trim());
 }
 
+/**
+ * percent% of an amount, rounded half-even to the currency's minor units: the same rule the
+ * server uses for savings targets, so previews match the saved result.
+ */
+export function percentOf(amount: number, percent: number, currency: string): number {
+  const exact = (toMinor(amount, currency) * percent) / 100;
+  const floor = Math.floor(exact);
+  const diff = exact - floor;
+  const epsilon = 1e-9;
+  let rounded: number;
+  if (diff > 0.5 + epsilon) rounded = floor + 1;
+  else if (diff < 0.5 - epsilon) rounded = floor;
+  else rounded = floor % 2 === 0 ? floor : floor + 1;
+  return fromMinor(rounded, currency);
+}
+
 export const COMMON_CURRENCIES = ['CAD', 'USD', 'EUR', 'GBP', 'MAD', 'JPY', 'AUD', 'CHF'] as const;

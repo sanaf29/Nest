@@ -17,7 +17,7 @@ import { currentYearMonth, formatDate, monthLabel } from '../utils/dates';
 
 function StatCard({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ink-200/70">
+    <div role="group" aria-label={label} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ink-200/70">
       <p className="text-sm text-ink-500">{label}</p>
       <div className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">{children}</div>
       {hint && <p className="mt-1 text-xs text-ink-500">{hint}</p>}

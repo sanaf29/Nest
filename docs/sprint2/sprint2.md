@@ -19,12 +19,12 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 | 6.1 | Create a savings goal | High | Done |
 | 6.2 | Record contributions and see progress | High | Done |
 | 6.3 | Achieved goals marked automatically | Medium | Done |
-| 7.1 | Dashboard: balances, income, expenses, net cash flow | High | Done (API; UI in increment 5) |
-| 7.2 | Charts: spending by category, monthly trends | High | In Progress (API done; charts in increment 5) |
-| 7.3 | Monthly transaction calendar | Medium | Not Started |
-| 8.1 | Register and log in through the website | High | Not Started |
-| 8.2 | Manage accounts, categories, transactions, transfers in the UI | High | Not Started |
-| 8.3 | Works well on a phone | Medium | Not Started |
+| 7.1 | Dashboard: balances, income, expenses, net cash flow | High | Done |
+| 7.2 | Charts: spending by category, monthly trends | High | Done |
+| 7.3 | Monthly transaction calendar | Medium | Done |
+| 8.1 | Register and log in through the website | High | Done |
+| 8.2 | Manage accounts, categories, transactions, transfers in the UI | High | Done |
+| 8.3 | Works well on a phone | Medium | Done |
 
 ## Implementation Steps
 
@@ -33,8 +33,8 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 | 1 | Budgets | `feature/budgets` | `MonthlyBudget`, `BudgetAllocation`, `SavingsAllocationStrategy` (percentage / fixed), budget summary, V6, `/api/budgets` | Done |
 | 2 | Savings goals | `feature/savings-goals` | `SavingsGoal`, `GoalContribution`, idempotent contributions, V7, `/api/savings-goals` | Done |
 | 3 | Dashboard APIs | `feature/dashboard` | Balances by currency, cash flow, spending by category, monthly trends | Done |
-| 4 | Frontend foundation | `feature/frontend-foundation` | Vite + React + TS + Tailwind, API client, auth context, protected routes, layout, login/register | Not Started |
-| 5 | Frontend features | `feature/frontend-*` | Dashboard, accounts, transactions + transfers + categories, budget planner, goals, calendar | Not Started |
+| 4 | Frontend foundation | `feature/frontend-foundation` | Vite + React + TS + Tailwind, API client, auth context, protected routes, layout, login/register | Done |
+| 5 | Frontend features | `feature/frontend-*` | Dashboard, accounts, transactions + transfers + categories, budget planner, goals, calendar | Done |
 | 6 | Sprint close | `docs/sprint2-review` | Updated class diagram, sequence diagrams, testing, SR2 | Not Started |
 
 ## Technical Decisions
@@ -102,3 +102,17 @@ Sprint 2 builds on the Sprint 1 architecture; nothing is replaced.
 | Postman | Newman on :8081 | 111 requests, 224 assertions, 0 failures (new folders: Budgets, Savings Goals, Dashboard) |
 
 The first Newman run had one failing assertion in the Dashboard folder. The assertion expected 100 of October expenses, but the Transactions folder deletes that expense earlier in the run, so 0 was correct. The assertion was fixed and the full collection rerun.
+
+### Increments 4–5: Frontend
+- Foundation: Vite 8, React 19, TypeScript strict, Tailwind 4 design tokens, React Router 7, a typed Axios API layer, AuthProvider with a persisted session and 401 handling, protected and guest routes, a responsive layout, and a reusable UI kit
+- Pages: Dashboard (stats, category donut, 6-month trends, budget snapshot, goals), Accounts and account history, Transactions (filters, search, sort, paging, add/edit/delete, transfers), Categories, Budget planner (live preview with half-even rounding, category limits, status), Savings goals (contributions with an idempotency key, history), Calendar (daily totals, day detail)
+- Accessibility: labelled fields with `aria-invalid`/`aria-describedby`, accessible dialogs (focus, Escape), skip link, progress bars with values, named stat groups, keyboard focus rings, charts that respect `prefers-reduced-motion`
+- Tests: 40 Vitest/RTL tests (utilities, forms, route protection, pages); 3 Playwright end-to-end tests against the real backend and SQL Server (full desktop journey, cross-user URL access, phone layout with no horizontal overflow)
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Type-check and build | `npm run build` | Pass |
+| Unit/component tests | `npm test` | 40 run, 0 failures |
+| End-to-end | `npm run e2e` (backend on :8081, dev database) | 3 run, 0 failures |
+
+While the end-to-end tests were being written, four test failures were caused by ambiguous selectors, e.g. "Savings" also matched the "Savings goals" navigation item. The fourth led to an app improvement: dashboard stats are now named groups (`role="group"`), which helps screen-reader users and gives tests a precise target. A visual review of the screenshots found that charts were captured mid-animation, which led to reduced-motion support.

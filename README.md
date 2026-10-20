@@ -14,7 +14,7 @@ Nest is built as a layered, object-oriented Spring Boot API backed by SQL Server
 |--------|-------|--------|
 | 0 | Planning and system design | Done |
 | 1 | Backend foundation: auth, accounts, categories, transactions, transfers | Done |
-| 2 | Budgets, savings goals, dashboard, React frontend | Planned |
+| 2 | Budgets, savings goals, dashboard, React frontend | In progress |
 | 3 | Insights, recurring transactions, reminders, expense splitting, reports | Planned |
 
 The release plan is in [`docs/sprint0/RPM.md`](docs/sprint0/RPM.md); sprint documents are in [`docs/`](docs/).
@@ -65,7 +65,8 @@ Key design decisions (full reasoning in [`docs/sprint0/system_design.md`](docs/s
 | Backend | Java 21, Spring Boot 3.5, Spring Web, Spring Data JPA / Hibernate 6, Spring Security (OAuth2 resource server, JWT), Bean Validation, springdoc-openapi |
 | Database | SQL Server 2022, Flyway |
 | Testing | JUnit 5, Mockito, AssertJ, Spring Boot Test, MockMvc, Testcontainers, Postman / Newman |
-| Frontend (Sprint 2) | React, TypeScript, Vite, React Router, Axios, Tailwind CSS, Recharts |
+| Frontend | React 19, TypeScript (strict), Vite, React Router, Axios, Tailwind CSS, Recharts |
+| Frontend testing | Vitest, React Testing Library, Playwright (end-to-end) |
 
 ### Repository layout
 
@@ -74,6 +75,8 @@ backend/            Spring Boot API (com.nest: config, controller, dto, exceptio
                     model, repository, security, service, validation)
   src/main/resources/db/migration/   Flyway migrations V1..Vn
 postman/            Postman collection + local environment
+frontend/           React + TypeScript SPA (src: components, pages, services, hooks, types,
+                    context, utils) and Playwright end-to-end tests (e2e/)
 docs/sprint0..3/    Backlog, process, design, UML, sprint plans, reviews
 docker-compose.yml  Local SQL Server
 ```
@@ -135,6 +138,24 @@ npx newman run postman/Nest.postman_collection.json -e postman/Nest.local.postma
 
 If port 8080 is taken by another application, start the backend with `./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081` and add `--env-var baseUrl=http://localhost:8081` to the Newman command, or change `baseUrl` in the Postman environment.
 
+### 6. Run the web app
+
+```bash
+cd frontend
+npm install
+npm run dev          # http://localhost:5173 (proxies /api to the backend on :8080)
+```
+
+If the backend runs on another port, create `frontend/.env.local` with `VITE_API_PROXY_TARGET=http://localhost:8081`.
+
+```bash
+npm test             # unit and component tests (Vitest + React Testing Library)
+npm run build        # type-check and production build
+npm run e2e          # end-to-end tests in Chromium against the running backend
+                     # (first time: npx playwright install chromium;
+                     #  backend on another port: E2E_API_URL=http://localhost:8081 npm run e2e)
+```
+
 ---
 
 ## API Overview
@@ -149,6 +170,9 @@ All endpoints except register and login require `Authorization: Bearer <token>`.
 | Categories | `POST /api/categories`, `GET /api/categories[?type&includeArchived]`, `GET/PUT/DELETE /api/categories/{id}` |
 | Transactions | `POST /api/transactions`, `GET /api/transactions[?accountId&categoryId&type&from&to&minAmount&maxAmount&q&page&size&sort]`, `GET/PUT/DELETE /api/transactions/{id}` |
 | Transfers | `POST /api/transfers`, `GET/DELETE /api/transfers/{id}` |
+| Budgets | `POST/GET /api/budgets`, `GET /api/budgets/{year}/{month}[?currency]`, `PUT/DELETE /api/budgets/{id}`, `GET /api/budgets/{id}/summary` |
+| Savings goals | `POST/GET /api/savings-goals[?status]`, `GET/PUT/DELETE /api/savings-goals/{id}`, `POST /api/savings-goals/{id}/contributions`, `DELETE /api/savings-goals/{id}/contributions/{contributionId}` |
+| Dashboard | `GET /api/dashboard/summary`, `GET /api/dashboard/spending-by-category`, `GET /api/dashboard/monthly-trends` |
 
 ---
 

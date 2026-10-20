@@ -1,15 +1,17 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import type { SpendingSlice } from '../../utils/chartData';
 import { formatMoney } from '../../utils/money';
 
 /** Donut chart with a legend that doubles as the accessible data table. */
 export function SpendingDonut({ slices, currency, total }: { slices: SpendingSlice[]; currency: string; total: number }) {
+  const animate = !usePrefersReducedMotion();
   return (
     <div className="grid grid-cols-1 items-center gap-6 sm:grid-cols-2">
       <div className="relative h-56" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={slices} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="92%" paddingAngle={2} stroke="none">
+            <Pie data={slices} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="92%" paddingAngle={2} stroke="none" isAnimationActive={animate}>
               {slices.map((slice) => (
                 <Cell key={slice.name} fill={slice.color} />
               ))}
